@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>会員ページ - PromptVault</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container members-page">
+    <header class="members-header">
+      <h1>PromptVault</h1>
+      <p>会員専用ページ</p>
+    </header>
+
+    <nav class="prompt-nav">
+      <a href="#writing" class="nav-item active">📝 文章作成</a>
+      <a href="#ideas" class="nav-item">💡 アイデア</a>
+      <a href="#analysis" class="nav-item">📊 分析</a>
+      <a href="#code" class="nav-item">🔧 コード</a>
+    </nav>
+
+    <!-- 文章作成プロンプト -->
+    <section id="writing" class="prompt-section">
+      <h2>📝 文章作成プロンプト</h2>
+
+      <div class="prompt-card">
+        <h3>ビジネスメール作成</h3>
+        <p class="description">状況に応じた丁寧なビジネスメールを作成</p>
+        <div class="prompt-box">
+          <pre>以下の条件でビジネスメールを作成してください。
+
+【宛先】{相手の立場: 例 取引先の部長}
+【目的】{メールの目的: 例 打ち合わせ日程の調整}
+【トーン】{フォーマル/カジュアル}
+【含めたい内容】
+- {ポイント1}
+- {ポイント2}
+
+簡潔で失礼のない文面にしてください。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <h3>SNS投稿文作成</h3>
+        <p class="description">バズりやすいSNS投稿を生成</p>
+        <div class="prompt-box">
+          <pre>以下の内容でSNS投稿文を作成してください。
+
+【プラットフォーム】{Twitter/Instagram/LinkedIn}
+【テーマ】{投稿したい内容}
+【目的】{認知拡大/エンゲージメント/誘導}
+【文字数】{140字以内/など}
+
+フックのある書き出しで、最後にアクションを促してください。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- アイデア出しプロンプト -->
+    <section id="ideas" class="prompt-section">
+      <h2>💡 アイデア出しプロンプト</h2>
+
+      <div class="prompt-card">
+        <h3>ブレインストーミング</h3>
+        <p class="description">多角的な視点でアイデアを大量に生成</p>
+        <div class="prompt-box">
+          <pre>以下のテーマについてブレインストーミングしてください。
+
+【テーマ】{解決したい課題やお題}
+【制約条件】{予算、時間、人数などの制約}
+
+以下の視点からそれぞれ3つずつアイデアを出してください：
+1. 王道アプローチ
+2. 逆転の発想
+3. 他業界からの転用
+4. テクノロジー活用
+5. コストゼロでできること
+
+各アイデアは1行で簡潔に。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- 分析・要約プロンプト -->
+    <section id="analysis" class="prompt-section">
+      <h2>📊 分析・要約プロンプト</h2>
+
+      <div class="prompt-card">
+        <h3>議事録作成</h3>
+        <p class="description">会議メモから構造化された議事録を作成</p>
+        <div class="prompt-box">
+          <pre>以下の会議メモから議事録を作成してください。
+
+【会議メモ】
+{ここにメモを貼り付け}
+
+以下のフォーマットで出力してください：
+## 会議概要
+- 日時：
+- 参加者：
+- 目的：
+
+## 決定事項
+-
+
+## アクションアイテム
+| 担当 | タスク | 期限 |
+|-----|-------|-----|
+
+## 次回予定
+- </pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- コードプロンプト -->
+    <section id="code" class="prompt-section">
+      <h2>🔧 プログラミングプロンプト</h2>
+
+      <div class="prompt-card">
+        <h3>コードレビュー</h3>
+        <p class="description">バグや改善点を指摘</p>
+        <div class="prompt-box">
+          <pre>以下のコードをレビューしてください。
+
+```{言語}
+{コードを貼り付け}
+```
+
+以下の観点でチェックし、問題があれば指摘と修正案を提示してください：
+1. バグの可能性
+2. セキュリティリスク
+3. パフォーマンス
+4. 可読性
+5. ベストプラクティス
+
+重要度（高/中/低）も付けてください。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="members-footer">
+      <p><a href="index.html">← トップに戻る</a></p>
+      <p class="small">プロンプトは随時追加されます</p>
+    </footer>
+  </div>
+
+  <script>
+    function copyPrompt(btn) {
+      const pre = btn.previousElementSibling;
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピーしました!';
+        setTimeout(() => btn.textContent = 'コピー', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

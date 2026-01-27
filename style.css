@@ -1,0 +1,343 @@
+/* ===== 基本設定 ===== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif;
+  line-height: 1.7;
+  color: #333;
+  background: #f8f9fa;
+}
+
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ===== LP: ヘッダー ===== */
+.hero {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  margin-bottom: 40px;
+}
+
+.hero h1 {
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.tagline {
+  font-size: 1.3rem;
+  opacity: 0.95;
+}
+
+/* ===== LP: セクション共通 ===== */
+section {
+  background: white;
+  padding: 30px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* ===== LP: 価値提案 ===== */
+.problems {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.problems li {
+  padding: 10px 0 10px 30px;
+  position: relative;
+  border-bottom: 1px solid #eee;
+}
+
+.problems li::before {
+  content: "😓";
+  position: absolute;
+  left: 0;
+}
+
+.solution {
+  background: #f0f7ff;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+  border-left: 4px solid #667eea;
+}
+
+/* ===== LP: 特徴 ===== */
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 15px;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 20px 10px;
+  background: #fafafa;
+  border-radius: 8px;
+}
+
+.feature-card .icon {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.feature-card h3 {
+  font-size: 1rem;
+  margin-bottom: 5px;
+}
+
+.feature-card p {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* ===== LP: 料金 ===== */
+.price-card {
+  text-align: center;
+}
+
+.price {
+  margin-bottom: 20px;
+}
+
+.price .amount {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #667eea;
+}
+
+.price .period {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.benefits {
+  list-style: none;
+  margin-bottom: 25px;
+}
+
+.benefits li {
+  padding: 8px 0;
+  border-bottom: 1px dashed #eee;
+}
+
+.benefits li::before {
+  content: "✓ ";
+  color: #22c55e;
+  font-weight: bold;
+}
+
+.cta-button {
+  display: block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  text-decoration: none;
+  padding: 18px 40px;
+  border-radius: 50px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.note {
+  margin-top: 15px;
+  font-size: 0.85rem;
+  color: #888;
+}
+
+/* ===== LP: FAQ ===== */
+details {
+  border-bottom: 1px solid #eee;
+  padding: 15px 0;
+}
+
+summary {
+  cursor: pointer;
+  font-weight: bold;
+  list-style: none;
+}
+
+summary::before {
+  content: "Q. ";
+  color: #667eea;
+}
+
+details p {
+  margin-top: 10px;
+  padding-left: 20px;
+  color: #555;
+}
+
+/* ===== LP: フッター ===== */
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #888;
+  font-size: 0.9rem;
+}
+
+footer a {
+  color: #667eea;
+  text-decoration: none;
+}
+
+/* ===== 会員ページ ===== */
+.members-page {
+  max-width: 800px;
+}
+
+.members-header {
+  text-align: center;
+  padding: 30px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.members-header h1 {
+  font-size: 1.8rem;
+}
+
+/* ナビゲーション */
+.prompt-nav {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding: 10px 0;
+  margin-bottom: 20px;
+}
+
+.nav-item {
+  flex-shrink: 0;
+  padding: 10px 16px;
+  background: white;
+  border-radius: 20px;
+  text-decoration: none;
+  color: #333;
+  font-size: 0.9rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-item.active {
+  background: #667eea;
+  color: white;
+}
+
+/* プロンプトセクション */
+.prompt-section {
+  margin-bottom: 30px;
+}
+
+.prompt-section h2 {
+  font-size: 1.2rem;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #667eea;
+}
+
+/* プロンプトカード */
+.prompt-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 15px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.prompt-card h3 {
+  font-size: 1.1rem;
+  margin-bottom: 5px;
+}
+
+.prompt-card .description {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+.prompt-box {
+  background: #1e1e1e;
+  border-radius: 8px;
+  padding: 15px;
+  position: relative;
+}
+
+.prompt-box pre {
+  color: #d4d4d4;
+  font-size: 0.85rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-family: "SF Mono", Consolas, monospace;
+  margin-bottom: 10px;
+}
+
+.copy-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.copy-btn:hover {
+  background: #5a6fd6;
+}
+
+/* 会員フッター */
+.members-footer {
+  text-align: center;
+  padding: 30px;
+}
+
+.members-footer .small {
+  font-size: 0.85rem;
+  color: #888;
+  margin-top: 10px;
+}
+
+/* ===== レスポンシブ ===== */
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 2rem;
+  }
+
+  .tagline {
+    font-size: 1.1rem;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .price .amount {
+    font-size: 2.5rem;
+  }
+}
