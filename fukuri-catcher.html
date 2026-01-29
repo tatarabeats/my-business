@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>複利キャッチャー</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700&family=Noto+Sans+JP:wght@400;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@400;700&display=swap');
 
         * {
             margin: 0;
@@ -24,13 +24,28 @@
             touch-action: none;
         }
 
+        /* 画面振動 */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
+        }
+
+        @keyframes shakeLight {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-3px); }
+            75% { transform: translateX(3px); }
+        }
+
+        .shake { animation: shake 0.4s ease-out; }
+        .shake-light { animation: shakeLight 0.2s ease-out; }
+
         /* 背景エフェクト */
         #bg-effect {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background:
                 radial-gradient(ellipse at 20% 80%, rgba(120, 0, 255, 0.15) 0%, transparent 50%),
                 radial-gradient(ellipse at 80% 20%, rgba(255, 200, 0, 0.1) 0%, transparent 50%),
@@ -46,13 +61,34 @@
             z-index: 1;
         }
 
+        /* 音ボタン */
+        #sound-toggle {
+            position: fixed;
+            top: 12px;
+            right: 12px;
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #sound-toggle.muted {
+            color: rgba(255,255,255,0.3);
+        }
+
         /* ステータスバー */
         #status {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 16px 20px;
+            top: 0; left: 0; right: 0;
+            padding: 16px 60px 16px 20px;
             background: linear-gradient(180deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.8) 100%);
             backdrop-filter: blur(10px);
             border-bottom: 1px solid rgba(255,255,255,0.1);
@@ -61,7 +97,7 @@
 
         #stage-indicator {
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
             letter-spacing: 3px;
@@ -78,7 +114,7 @@
         #timer-display {
             font-family: 'Orbitron', monospace;
             font-size: 42px;
-            font-weight: 700;
+            font-weight: 900;
             color: #fff;
             text-shadow: 0 0 30px rgba(255,255,255,0.5);
         }
@@ -93,12 +129,10 @@
             to { transform: scale(1.05); text-shadow: 0 0 50px rgba(255,71,87,0.8); }
         }
 
-        #score-display {
-            text-align: right;
-        }
+        #score-display { text-align: right; }
 
         #score-label {
-            font-size: 11px;
+            font-size: 10px;
             color: rgba(255,255,255,0.4);
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -106,8 +140,8 @@
 
         #score-value {
             font-family: 'Orbitron', monospace;
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 26px;
+            font-weight: 900;
             background: linear-gradient(135deg, #ffd700, #ff8c00);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -163,7 +197,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.05s;
         }
 
         #bucket::before {
@@ -183,90 +216,103 @@
             color: #2d3436;
             font-family: 'Orbitron', monospace;
             font-weight: 700;
-            font-size: 16px;
+            font-size: 14px;
         }
 
-        /* 落下オブジェクト */
+        /* 落下オブジェクト - 視認性UP */
         .falling-item {
             position: absolute;
-            padding: 10px 14px;
-            border-radius: 10px;
+            padding: 8px 12px;
+            border-radius: 12px;
             font-family: 'Orbitron', monospace;
-            font-size: 16px;
-            font-weight: 700;
+            font-size: 20px;
+            font-weight: 900;
             text-align: center;
-            min-width: 60px;
+            min-width: 70px;
             pointer-events: none;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
 
         .falling-item.positive {
-            background: linear-gradient(135deg, #00b894, #00cec9);
+            background: linear-gradient(135deg, #00d26a, #00b894);
             color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 3px solid #fff;
+            box-shadow: 0 4px 20px rgba(0, 210, 106, 0.5);
         }
 
         .falling-item.negative {
-            background: linear-gradient(135deg, #d63031, #e17055);
+            background: linear-gradient(135deg, #ff3838, #c0392b);
             color: #fff;
-            border: 2px solid rgba(255,255,255,0.3);
+            border: 3px solid #ffcccc;
+            box-shadow: 0 4px 20px rgba(255, 56, 56, 0.5);
         }
 
         .falling-item.bonus {
-            background: linear-gradient(135deg, #f9ca24, #f0932b);
-            color: #2d3436;
-            border: 2px solid rgba(255,255,255,0.5);
-            animation: glow 0.4s infinite alternate;
+            background: linear-gradient(135deg, #ffd32a, #f0932b);
+            color: #000;
+            border: 3px solid #fff;
+            box-shadow: 0 0 25px rgba(255, 211, 42, 0.7);
+            animation: bonusGlow 0.3s infinite alternate;
+        }
+
+        @keyframes bonusGlow {
+            from { transform: scale(1); box-shadow: 0 0 25px rgba(255, 211, 42, 0.7); }
+            to { transform: scale(1.08); box-shadow: 0 0 40px rgba(255, 211, 42, 1); }
         }
 
         .falling-item.coin {
             background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
             color: #2d3436;
-            border: 2px solid #f39c12;
+            border: 3px solid #f39c12;
             border-radius: 50%;
-            width: 55px;
-            height: 55px;
+            width: 58px;
+            height: 58px;
             min-width: unset;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 11px;
+            font-size: 12px;
+            font-weight: 900;
         }
 
         .falling-item.coin.rare {
             background: linear-gradient(135deg, #a29bfe, #6c5ce7);
             color: #fff;
             border-color: #fff;
-            animation: glow 0.3s infinite alternate;
+            animation: rareGlow 0.25s infinite alternate;
+        }
+
+        @keyframes rareGlow {
+            from { box-shadow: 0 0 15px rgba(108, 92, 231, 0.6); }
+            to { box-shadow: 0 0 30px rgba(108, 92, 231, 1); }
         }
 
         .falling-item.coin.legendary {
             background: linear-gradient(135deg, #fd79a8, #e84393);
             color: #fff;
             border-color: #fff;
-            animation: glow 0.2s infinite alternate;
-            box-shadow: 0 0 20px rgba(232, 67, 147, 0.6);
+            animation: legendaryGlow 0.15s infinite alternate;
+        }
+
+        @keyframes legendaryGlow {
+            from { transform: scale(1); box-shadow: 0 0 20px rgba(232, 67, 147, 0.8); }
+            to { transform: scale(1.1); box-shadow: 0 0 40px rgba(232, 67, 147, 1); }
         }
 
         .falling-item.bomb {
             background: linear-gradient(135deg, #2d3436, #636e72);
             color: #ff4757;
-            border: 2px solid #ff4757;
+            border: 3px solid #ff4757;
             border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            width: 52px;
+            height: 52px;
             min-width: unset;
             padding: 0;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-        }
-
-        @keyframes glow {
-            from { box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 10px rgba(255,200,0,0.3); }
-            to { box-shadow: 0 4px 15px rgba(0,0,0,0.3), 0 0 25px rgba(255,200,0,0.6); }
+            font-size: 26px;
         }
 
         /* エフェクト */
@@ -274,30 +320,28 @@
             position: absolute;
             pointer-events: none;
             font-family: 'Orbitron', monospace;
-            font-size: 22px;
-            font-weight: 700;
+            font-size: 26px;
+            font-weight: 900;
             animation: floatUp 0.6s ease-out forwards;
             z-index: 200;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
         }
 
-        .catch-effect.positive { color: #00b894; }
-        .catch-effect.negative { color: #d63031; }
-        .catch-effect.bonus { color: #f9ca24; }
+        .catch-effect.positive { color: #00d26a; }
+        .catch-effect.negative { color: #ff3838; }
+        .catch-effect.bonus { color: #ffd32a; }
         .catch-effect.coin { color: #fdcb6e; }
+        .catch-effect.bomb { color: #ff4757; }
 
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-60px) scale(1.3); }
+            100% { opacity: 0; transform: translateY(-70px) scale(1.4); }
         }
 
         /* 画面共通 */
         .screen {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(10, 10, 15, 0.98);
             display: flex;
             flex-direction: column;
@@ -313,8 +357,8 @@
         /* スタート画面 */
         #start-screen .logo {
             font-family: 'Orbitron', monospace;
-            font-size: 32px;
-            font-weight: 700;
+            font-size: 28px;
+            font-weight: 900;
             background: linear-gradient(135deg, #ffd700, #ff8c00, #ff6b6b);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -326,13 +370,13 @@
         #start-screen .tagline {
             font-size: 14px;
             color: rgba(255,255,255,0.5);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         #start-screen .highscore {
             font-size: 13px;
             color: rgba(255,255,255,0.4);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
 
         #start-screen .highscore span {
@@ -344,44 +388,43 @@
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
             border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 30px;
+            padding: 18px;
+            margin-bottom: 25px;
             max-width: 300px;
         }
 
         .rules-box h3 {
-            font-size: 12px;
+            font-size: 11px;
             color: rgba(255,255,255,0.6);
             text-transform: uppercase;
             letter-spacing: 2px;
-            margin-bottom: 15px;
-        }
-
-        .rules-box p {
-            font-size: 13px;
-            color: rgba(255,255,255,0.7);
-            line-height: 1.8;
-            text-align: left;
+            margin-bottom: 12px;
         }
 
         .rules-box .stage {
             display: flex;
             align-items: center;
             gap: 10px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+        }
+
+        .rules-box .stage p {
+            font-size: 13px;
+            color: rgba(255,255,255,0.7);
         }
 
         .rules-box .stage-num {
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: #fff;
-            width: 24px;
-            height: 24px;
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 700;
+            flex-shrink: 0;
         }
 
         .btn {
@@ -404,10 +447,6 @@
             box-shadow: 0 4px 20px rgba(255, 200, 0, 0.4);
         }
 
-        .btn-primary:hover {
-            box-shadow: 0 6px 30px rgba(255, 200, 0, 0.6);
-        }
-
         /* ステージ遷移画面 */
         #stage-transition {
             background: rgba(10, 10, 15, 0.95);
@@ -416,7 +455,7 @@
         #stage-transition .stage-number {
             font-family: 'Orbitron', monospace;
             font-size: 72px;
-            font-weight: 700;
+            font-weight: 900;
             background: linear-gradient(135deg, #667eea, #764ba2);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -435,25 +474,54 @@
             color: rgba(255,255,255,0.5);
         }
 
+        /* 成績表示画面 */
+        #stage-result {
+            background: rgba(10, 10, 15, 0.95);
+        }
+
+        #stage-result .result-title {
+            font-size: 14px;
+            color: rgba(255,255,255,0.5);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        #stage-result .result-value {
+            font-family: 'Orbitron', monospace;
+            font-size: 56px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d26a, #00b894);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        #stage-result .result-message {
+            font-size: 16px;
+            color: #ffd700;
+        }
+
         /* 複利画面 */
         #compound-screen .compound-title {
-            font-size: 16px;
+            font-size: 14px;
             color: rgba(255,255,255,0.5);
             text-transform: uppercase;
             letter-spacing: 3px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         #compound-screen .compound-formula {
-            font-size: 14px;
+            font-size: 13px;
             color: rgba(255,255,255,0.6);
             margin-bottom: 20px;
         }
 
         #compound-screen .compound-money {
             font-family: 'Orbitron', monospace;
-            font-size: 48px;
-            font-weight: 700;
+            font-size: 44px;
+            font-weight: 900;
             color: #fff;
             margin-bottom: 10px;
             transition: all 0.15s;
@@ -461,11 +529,11 @@
 
         #compound-screen .compound-money.growing {
             transform: scale(1.1);
-            color: #00b894;
+            color: #00d26a;
         }
 
         #compound-screen .compound-year {
-            font-size: 18px;
+            font-size: 16px;
             color: rgba(255,255,255,0.6);
         }
 
@@ -480,9 +548,9 @@
 
         #result-screen .result-money {
             font-family: 'Orbitron', monospace;
-            font-size: 44px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #00b894, #00cec9);
+            font-size: 40px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00d26a, #00cec9);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -524,7 +592,7 @@
             transform: translate(-50%, -50%);
             font-family: 'Orbitron', monospace;
             font-size: 100px;
-            font-weight: 700;
+            font-weight: 900;
             color: #fff;
             text-shadow: 0 0 50px rgba(255, 255, 255, 0.5);
             z-index: 300;
@@ -542,6 +610,9 @@
 </head>
 <body>
     <div id="bg-effect"></div>
+
+    <!-- 音ボタン -->
+    <button id="sound-toggle" onclick="toggleSound()">🔊</button>
 
     <!-- スタート画面 -->
     <div id="start-screen" class="screen">
@@ -571,6 +642,13 @@
         <div class="stage-number">1</div>
         <div class="stage-name">年率コレクター</div>
         <div class="stage-desc">緑と金を集めろ。赤は避けろ。</div>
+    </div>
+
+    <!-- ステージ成績画面 -->
+    <div id="stage-result" class="screen hidden">
+        <div class="result-title">STAGE 1 CLEAR!</div>
+        <div class="result-value">+0%</div>
+        <div class="result-message">年率確定！</div>
     </div>
 
     <!-- 複利画面 -->
@@ -621,12 +699,12 @@
             COMPOUND_YEARS: 10,
             BUCKET_WIDTH: 110,
             BUCKET_HEIGHT: 55,
-            // ステージ1設定
+            STAGE_TRANSITION_TIME: 2500, // +1秒
+            STAGE_RESULT_TIME: 2000,
             S1_SPAWN_INTERVAL: 450,
             S1_FALL_SPEED: 4.5,
-            S1_NEGATIVE_RATE: 0.45, // 赤の出現率45%
+            S1_NEGATIVE_RATE: 0.45,
             S1_BONUS_RATE: 0.08,
-            // ステージ2設定
             S2_SPAWN_INTERVAL: 350,
             S2_FALL_SPEED: 5,
             S2_BOMB_RATE: 0.15,
@@ -634,8 +712,8 @@
             S2_LEGENDARY_RATE: 0.03,
         };
 
-        // ハイスコア
         let highScore = parseInt(localStorage.getItem('fukuri-highscore-v2')) || 100;
+        let soundEnabled = true;
 
         // サウンド
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -645,8 +723,21 @@
             if (!audioCtx) audioCtx = new AudioContext();
         }
 
+        function toggleSound() {
+            soundEnabled = !soundEnabled;
+            document.getElementById('sound-toggle').textContent = soundEnabled ? '🔊' : '🔇';
+            document.getElementById('sound-toggle').classList.toggle('muted', !soundEnabled);
+        }
+
         function playSound(type) {
-            if (!audioCtx) return;
+            if (!audioCtx || !soundEnabled) return;
+
+            if (type === 'coin' || type === 'register') {
+                // チャリン音 / レジ音
+                playCoinSound(type === 'register');
+                return;
+            }
+
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.connect(gain);
@@ -656,7 +747,7 @@
                 case 'catch':
                     osc.frequency.setValueAtTime(880, audioCtx.currentTime);
                     osc.frequency.exponentialRampToValueAtTime(1320, audioCtx.currentTime + 0.08);
-                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.1);
                     break;
@@ -664,42 +755,36 @@
                     osc.frequency.setValueAtTime(523, audioCtx.currentTime);
                     osc.frequency.setValueAtTime(659, audioCtx.currentTime + 0.08);
                     osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.16);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+                    osc.frequency.setValueAtTime(1047, audioCtx.currentTime + 0.24);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.35);
                     break;
                 case 'negative':
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(200, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.15);
+                    osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.2);
                     gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.15);
-                    break;
-                case 'coin':
-                    osc.frequency.setValueAtTime(1200, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(800, audioCtx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.2);
                     break;
                 case 'bomb':
                     osc.type = 'square';
                     osc.frequency.setValueAtTime(100, audioCtx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.3);
+                    osc.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 0.4);
                     gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
-                    osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start(); osc.stop(audioCtx.currentTime + 0.4);
                     break;
                 case 'compound':
                     osc.frequency.setValueAtTime(440 + Math.random() * 200, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.08);
                     break;
                 case 'countdown':
                     osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.15);
                     break;
@@ -707,10 +792,68 @@
                     osc.frequency.setValueAtTime(523, audioCtx.currentTime);
                     osc.frequency.setValueAtTime(784, audioCtx.currentTime + 0.1);
                     osc.frequency.setValueAtTime(1047, audioCtx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
                     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
                     osc.start(); osc.stop(audioCtx.currentTime + 0.35);
                     break;
+                case 'clear':
+                    // ステージクリア音
+                    [523, 659, 784, 1047].forEach((freq, i) => {
+                        const o = audioCtx.createOscillator();
+                        const g = audioCtx.createGain();
+                        o.connect(g); g.connect(audioCtx.destination);
+                        o.frequency.setValueAtTime(freq, audioCtx.currentTime + i * 0.1);
+                        g.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.1);
+                        g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + i * 0.1 + 0.3);
+                        o.start(audioCtx.currentTime + i * 0.1);
+                        o.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+                    });
+                    break;
+            }
+        }
+
+        function playCoinSound(isRegister) {
+            // チャリン音をリアルに
+            const t = audioCtx.currentTime;
+            [2400, 3200, 2800].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.frequency.setValueAtTime(freq, t + i * 0.03);
+                gain.gain.setValueAtTime(isRegister ? 0.15 : 0.1, t + i * 0.03);
+                gain.gain.exponentialRampToValueAtTime(0.01, t + i * 0.03 + 0.15);
+                osc.start(t + i * 0.03);
+                osc.stop(t + i * 0.03 + 0.15);
+            });
+
+            if (isRegister) {
+                // レジの「カチャッ」
+                setTimeout(() => {
+                    const noise = audioCtx.createOscillator();
+                    const noiseGain = audioCtx.createGain();
+                    noise.type = 'square';
+                    noise.connect(noiseGain);
+                    noiseGain.connect(audioCtx.destination);
+                    noise.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    noiseGain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                    noiseGain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
+                    noise.start(); noise.stop(audioCtx.currentTime + 0.05);
+                }, 150);
+            }
+        }
+
+        // 画面振動
+        function shake(intensity = 'normal') {
+            const container = document.getElementById('game-container');
+            container.classList.remove('shake', 'shake-light');
+            void container.offsetWidth; // リフロー
+            container.classList.add(intensity === 'light' ? 'shake-light' : 'shake');
+
+            // バイブレーション（対応端末のみ）
+            if (navigator.vibrate) {
+                navigator.vibrate(intensity === 'light' ? 50 : 150);
             }
         }
 
@@ -729,10 +872,10 @@
             animationFrame: null,
         };
 
-        // DOM要素
         const el = {
             startScreen: document.getElementById('start-screen'),
             stageTransition: document.getElementById('stage-transition'),
+            stageResult: document.getElementById('stage-result'),
             compoundScreen: document.getElementById('compound-screen'),
             resultScreen: document.getElementById('result-screen'),
             countdown: document.getElementById('countdown'),
@@ -747,7 +890,6 @@
             highscoreDisplay: document.getElementById('highscore-display'),
         };
 
-        // 初期化
         function init() {
             el.highscoreDisplay.textContent = formatMoney(highScore);
             initBucket();
@@ -796,21 +938,12 @@
         document.addEventListener('touchmove', handleDragMove, { passive: false });
         document.addEventListener('touchend', handleDragEnd);
 
-        // ゲーム開始
         function startGame() {
             initAudio();
             gameState = {
-                stage: 1,
-                rate: 0,
-                money: 0,
-                phase: 'idle',
-                timeLeft: 0,
-                fallingItems: [],
-                bucketX: gameState.bucketX,
-                bucketY: gameState.bucketY,
-                spawnTimer: null,
-                gameTimer: null,
-                animationFrame: null,
+                stage: 1, rate: 0, money: 0, phase: 'idle', timeLeft: 0,
+                fallingItems: [], bucketX: gameState.bucketX, bucketY: gameState.bucketY,
+                spawnTimer: null, gameTimer: null, animationFrame: null,
             };
             document.querySelectorAll('.falling-item, .catch-effect').forEach(e => e.remove());
             el.startScreen.classList.add('hidden');
@@ -820,7 +953,6 @@
             });
         }
 
-        // ステージ遷移表示
         function showStageTransition(num, name, desc, callback) {
             const st = el.stageTransition;
             st.querySelector('.stage-number').textContent = num;
@@ -830,10 +962,22 @@
             setTimeout(() => {
                 st.classList.add('hidden');
                 callback();
-            }, 1500);
+            }, CONFIG.STAGE_TRANSITION_TIME);
         }
 
-        // カウントダウン
+        function showStageResult(title, value, message, callback) {
+            const sr = el.stageResult;
+            sr.querySelector('.result-title').textContent = title;
+            sr.querySelector('.result-value').textContent = value;
+            sr.querySelector('.result-message').textContent = message;
+            sr.classList.remove('hidden');
+            playSound('clear');
+            setTimeout(() => {
+                sr.classList.add('hidden');
+                callback();
+            }, CONFIG.STAGE_RESULT_TIME);
+        }
+
         function startCountdown(callback) {
             let count = 3;
             el.countdown.classList.remove('hidden');
@@ -863,17 +1007,14 @@
             }, 600);
         }
 
-        // ステージ1: 年率コレクター
         function startStage1() {
             gameState.stage = 1;
             gameState.phase = 'playing';
             gameState.timeLeft = CONFIG.STAGE1_DURATION;
             gameState.rate = 0;
-
             el.stageIndicator.textContent = 'STAGE 1 - 年率コレクター';
             el.scoreLabel.textContent = 'RATE';
             updateUI();
-
             gameState.spawnTimer = setInterval(spawnStage1Item, CONFIG.S1_SPAWN_INTERVAL);
             gameState.gameTimer = setInterval(() => updateTimer(endStage1), 100);
             gameLoop();
@@ -883,8 +1024,6 @@
             if (gameState.phase !== 'playing') return;
             const statusH = document.getElementById('status').offsetHeight;
             const w = window.innerWidth;
-
-            // 複数同時に落とす（60%の確率で2個）
             const count = Math.random() < 0.6 ? 2 : 1;
 
             for (let i = 0; i < count; i++) {
@@ -893,30 +1032,26 @@
 
                 if (rand < CONFIG.S1_BONUS_RATE) {
                     type = 'bonus';
-                    value = Math.floor(Math.random() * 8 + 8); // 8-15%
+                    value = Math.floor(Math.random() * 8 + 8);
                     text = '+' + value + '%';
                 } else if (rand < CONFIG.S1_BONUS_RATE + CONFIG.S1_NEGATIVE_RATE) {
                     type = 'negative';
-                    value = -Math.floor(Math.random() * 6 + 3); // -3 to -8%
+                    value = -Math.floor(Math.random() * 6 + 3);
                     text = value + '%';
                 } else {
                     type = 'positive';
-                    value = Math.floor(Math.random() * 4 + 1); // 1-4%
+                    value = Math.floor(Math.random() * 4 + 1);
                     text = '+' + value + '%';
                 }
 
                 const item = document.createElement('div');
                 item.className = `falling-item ${type}`;
                 item.textContent = text;
-                const x = Math.random() * (w - 70);
+                const x = Math.random() * (w - 80);
                 item.style.left = x + 'px';
                 item.style.top = statusH + 'px';
                 el.gameContainer.appendChild(item);
-
-                gameState.fallingItems.push({
-                    element: item, type, value, x, y: statusH,
-                    width: 60, height: 45
-                });
+                gameState.fallingItems.push({ element: item, type, value, x, y: statusH, width: 70, height: 45 });
             }
         }
 
@@ -926,23 +1061,23 @@
             gameState.fallingItems = [];
             gameState.phase = 'idle';
 
-            // ステージ2へ
-            showStageTransition(2, '元金ハンター', 'コインを集めろ。爆弾は避けろ。', () => {
-                startCountdown(() => startStage2());
+            // ステージ成績表示
+            const rateStr = (gameState.rate >= 0 ? '+' : '') + (gameState.rate * 100).toFixed(1) + '%';
+            showStageResult('STAGE 1 CLEAR!', rateStr, '年率確定！', () => {
+                showStageTransition(2, '元金ハンター', 'コインを集めろ。爆弾は避けろ。', () => {
+                    startCountdown(() => startStage2());
+                });
             });
         }
 
-        // ステージ2: 元金ハンター
         function startStage2() {
             gameState.stage = 2;
             gameState.phase = 'playing';
             gameState.timeLeft = CONFIG.STAGE2_DURATION;
-            gameState.money = 100; // 初期元金
-
+            gameState.money = 100;
             el.stageIndicator.textContent = 'STAGE 2 - 元金ハンター';
             el.scoreLabel.textContent = 'MONEY';
             updateUI();
-
             gameState.spawnTimer = setInterval(spawnStage2Item, CONFIG.S2_SPAWN_INTERVAL);
             gameState.gameTimer = setInterval(() => updateTimer(endStage2), 100);
             gameLoop();
@@ -952,41 +1087,35 @@
             if (gameState.phase !== 'playing') return;
             const statusH = document.getElementById('status').offsetHeight;
             const w = window.innerWidth;
-
             const rand = Math.random();
             let type, value, text, extraClass = '';
 
             if (rand < CONFIG.S2_BOMB_RATE) {
-                type = 'bomb';
-                value = -0.5; // 元金半減
-                text = '💣';
+                type = 'bomb'; value = -0.5; text = '💣';
             } else if (rand < CONFIG.S2_BOMB_RATE + CONFIG.S2_LEGENDARY_RATE) {
-                type = 'coin';
-                extraClass = 'legendary';
-                value = Math.floor(Math.random() * 50000 + 50000); // 5万〜10万
-                text = '¥' + (value >= 10000 ? Math.floor(value/10000) + '万' : value);
+                type = 'coin'; extraClass = 'legendary';
+                value = Math.floor(Math.random() * 50000 + 50000);
+                text = '¥' + Math.floor(value/10000) + '万';
             } else if (rand < CONFIG.S2_BOMB_RATE + CONFIG.S2_LEGENDARY_RATE + CONFIG.S2_RARE_RATE) {
-                type = 'coin';
-                extraClass = 'rare';
-                value = Math.floor(Math.random() * 9000 + 1000); // 1000〜1万
+                type = 'coin'; extraClass = 'rare';
+                value = Math.floor(Math.random() * 9000 + 1000);
                 text = '¥' + value;
             } else {
                 type = 'coin';
-                value = Math.floor(Math.random() * 400 + 100); // 100〜500
+                value = Math.floor(Math.random() * 400 + 100);
                 text = '¥' + value;
             }
 
             const item = document.createElement('div');
-            item.className = `falling-item ${type} ${extraClass}`;
+            item.className = `falling-item ${type} ${extraClass}`.trim();
             item.textContent = text;
             const x = Math.random() * (w - 60);
             item.style.left = x + 'px';
             item.style.top = statusH + 'px';
             el.gameContainer.appendChild(item);
-
             gameState.fallingItems.push({
-                element: item, type, value, x, y: statusH,
-                width: type === 'bomb' ? 50 : 55, height: type === 'bomb' ? 50 : 55
+                element: item, type, value, x, y: statusH, extraClass,
+                width: type === 'bomb' ? 52 : 58, height: type === 'bomb' ? 52 : 58
             });
         }
 
@@ -996,15 +1125,15 @@
             gameState.fallingItems = [];
             gameState.phase = 'idle';
 
-            // 複利計算へ
-            startCompoundPhase();
+            // ステージ成績表示
+            showStageResult('STAGE 2 CLEAR!', '¥' + gameState.money.toLocaleString(), '元金確定！', () => {
+                startCompoundPhase();
+            });
         }
 
-        // 複利計算フェーズ
         function startCompoundPhase() {
             const cs = el.compoundScreen;
             cs.classList.remove('hidden');
-
             const rate = gameState.rate;
             const initialMoney = gameState.money;
             cs.querySelector('.compound-formula').textContent =
@@ -1014,7 +1143,6 @@
             let year = 0;
             const moneyEl = cs.querySelector('.compound-money');
             const yearEl = cs.querySelector('.compound-year');
-
             moneyEl.textContent = formatMoney(money);
             yearEl.textContent = year + '年目';
 
@@ -1022,7 +1150,6 @@
                 year++;
                 money *= (1 + rate);
                 playSound('compound');
-
                 moneyEl.textContent = formatMoney(money);
                 moneyEl.classList.add('growing');
                 setTimeout(() => moneyEl.classList.remove('growing'), 100);
@@ -1031,15 +1158,15 @@
                 if (year >= CONFIG.COMPOUND_YEARS) {
                     clearInterval(interval);
                     yearEl.textContent = CONFIG.COMPOUND_YEARS + '年後！';
+                    playSound('register'); // レジ音
                     setTimeout(() => {
                         cs.classList.add('hidden');
                         showResult(money);
-                    }, 800);
+                    }, 1000);
                 }
             }, 280);
         }
 
-        // 結果表示
         function showResult(finalMoney) {
             const isNewRecord = finalMoney > highScore;
             if (isNewRecord) {
@@ -1055,14 +1182,11 @@
                 `元金: <span>¥${gameState.money.toLocaleString()}</span><br>` +
                 `年利: <span>${gameState.rate >= 0 ? '+' : ''}${(gameState.rate * 100).toFixed(1)}%</span><br>` +
                 `運用: <span>${CONFIG.COMPOUND_YEARS}年</span>`;
-
             rs.classList.remove('hidden');
         }
 
-        // ゲームループ
         function gameLoop() {
             if (gameState.phase !== 'playing') return;
-
             const h = window.innerHeight;
             const speed = gameState.stage === 1 ? CONFIG.S1_FALL_SPEED : CONFIG.S2_FALL_SPEED;
             const bucketTop = gameState.bucketY;
@@ -1074,11 +1198,9 @@
                 const item = gameState.fallingItems[i];
                 item.y += speed;
                 item.element.style.top = item.y + 'px';
-
                 const itemCX = item.x + item.width / 2;
                 const itemBottom = item.y + item.height;
 
-                // 衝突判定
                 if (itemBottom >= bucketTop && itemBottom <= bucketBottom + 15) {
                     if (itemCX >= bucketLeft && itemCX <= bucketRight) {
                         onCatch(item, i);
@@ -1086,33 +1208,45 @@
                     }
                 }
 
-                // 画面外
                 if (item.y > h) {
                     item.element.remove();
                     gameState.fallingItems.splice(i, 1);
                 }
             }
-
             gameState.animationFrame = requestAnimationFrame(gameLoop);
         }
 
-        // キャッチ処理
         function onCatch(item, index) {
+            let shouldShake = false;
+            let shakeIntensity = 'light';
+
             if (gameState.stage === 1) {
                 gameState.rate += item.value / 100;
-                if (item.type === 'bonus') playSound('bonus');
-                else if (item.type === 'negative') playSound('negative');
-                else playSound('catch');
+                if (item.type === 'bonus') {
+                    playSound('bonus');
+                    shouldShake = true;
+                } else if (item.type === 'negative') {
+                    playSound('negative');
+                } else {
+                    playSound('catch');
+                }
             } else {
                 if (item.type === 'bomb') {
                     gameState.money = Math.floor(gameState.money * 0.5);
                     playSound('bomb');
+                    shouldShake = true;
+                    shakeIntensity = 'normal';
                 } else {
                     gameState.money += item.value;
                     playSound('coin');
+                    // レジェンダリーで振動
+                    if (item.extraClass === 'legendary') {
+                        shouldShake = true;
+                    }
                 }
             }
 
+            if (shouldShake) shake(shakeIntensity);
             showCatchEffect(item);
             item.element.remove();
             gameState.fallingItems.splice(index, 1);
@@ -1125,7 +1259,7 @@
             if (gameState.stage === 1) {
                 effect.textContent = (item.value > 0 ? '+' : '') + item.value + '%';
             } else {
-                effect.textContent = item.type === 'bomb' ? '-50%' : '+¥' + item.value;
+                effect.textContent = item.type === 'bomb' ? '-50%' : '+¥' + item.value.toLocaleString();
             }
             effect.style.left = (item.x + item.width / 2) + 'px';
             effect.style.top = item.y + 'px';
@@ -1133,24 +1267,17 @@
             setTimeout(() => effect.remove(), 600);
         }
 
-        // タイマー更新
         function updateTimer(endCallback) {
             gameState.timeLeft -= 0.1;
-            if (gameState.timeLeft <= 0) {
-                gameState.timeLeft = 0;
-                endCallback();
-            }
+            if (gameState.timeLeft <= 0) { gameState.timeLeft = 0; endCallback(); }
             updateUI();
         }
 
-        // UI更新
         function updateUI() {
             const duration = gameState.stage === 1 ? CONFIG.STAGE1_DURATION : CONFIG.STAGE2_DURATION;
             const timeInt = Math.ceil(gameState.timeLeft);
-
             el.timerDisplay.textContent = timeInt;
             el.timerDisplay.classList.toggle('danger', timeInt <= 5);
-
             const pct = (gameState.timeLeft / duration) * 100;
             el.progressBar.style.width = pct + '%';
             el.progressBar.classList.toggle('danger', pct < 25);
@@ -1179,7 +1306,6 @@
             return '¥' + Math.floor(amount);
         }
 
-        // 初期化実行
         init();
     </script>
 </body>
