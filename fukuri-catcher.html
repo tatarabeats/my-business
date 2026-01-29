@@ -35,58 +35,52 @@
             top: 0;
             left: 0;
             right: 0;
-            padding: 15px;
+            padding: 12px 15px;
             background: rgba(0, 0, 0, 0.9);
             color: #fff;
             z-index: 100;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
         }
 
-        #phase-indicator {
-            font-size: 14px;
-            color: #888;
-            text-align: center;
-        }
-
-        #phase-indicator.collect {
-            color: #4ade80;
-        }
-
-        #phase-indicator.compound {
-            color: #ffd700;
-        }
-
-        #money {
-            font-size: 24px;
-            font-weight: bold;
-            color: #ffd700;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
-        }
-
-        #stats {
+        #top-row {
             display: flex;
             justify-content: space-between;
-            font-size: 14px;
-            color: #aaa;
+            align-items: center;
+            margin-bottom: 8px;
         }
 
-        #rate {
+        #timer-display {
+            font-size: 48px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+
+        #timer-display.danger {
+            color: #f87171;
+            animation: timerPulse 0.5s infinite alternate;
+        }
+
+        @keyframes timerPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        #rate-display {
+            font-size: 24px;
+            font-weight: bold;
             color: #4ade80;
         }
 
-        #rate.negative {
+        #rate-display.negative {
             color: #f87171;
         }
 
         /* タイマーバー */
         #timer-bar-container {
             width: 100%;
-            height: 6px;
+            height: 8px;
             background: #333;
-            border-radius: 3px;
+            border-radius: 4px;
             overflow: hidden;
         }
 
@@ -101,56 +95,55 @@
             background: linear-gradient(90deg, #f87171, #ef4444);
         }
 
-        /* プログレスバー（目標まで） */
-        #progress-container {
-            width: 100%;
-            height: 4px;
-            background: #222;
-            border-radius: 2px;
-            overflow: hidden;
-        }
-
-        #progress-bar {
-            height: 100%;
-            background: linear-gradient(90deg, #ffd700, #ff6b6b);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        /* バケツ */
+        /* バケツ - 超目立たせる */
         #bucket {
             position: absolute;
-            bottom: 30px;
-            width: 100px;
-            height: 70px;
-            background: linear-gradient(180deg, #3b82f6, #1d4ed8);
-            border-radius: 10px 10px 20px 20px;
-            border: 3px solid #60a5fa;
-            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.5),
-                        inset 0 -10px 20px rgba(0, 0, 0, 0.3);
+            bottom: 60px;
+            width: 120px;
+            height: 50px;
+            background: linear-gradient(180deg, #ffd700, #f59e0b);
+            border-radius: 15px 15px 25px 25px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 215, 0, 0.8),
+                        0 0 60px rgba(255, 215, 0, 0.4),
+                        inset 0 -10px 20px rgba(0, 0, 0, 0.2);
             z-index: 50;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: transform 0.05s;
         }
 
         #bucket::before {
             content: '';
             position: absolute;
-            top: -8px;
-            left: 10px;
-            right: 10px;
-            height: 8px;
-            background: #60a5fa;
-            border-radius: 5px 5px 0 0;
+            top: -12px;
+            left: 15px;
+            right: 15px;
+            height: 12px;
+            background: #fff;
+            border-radius: 8px 8px 0 0;
+        }
+
+        #bucket::after {
+            content: '▼';
+            position: absolute;
+            top: -40px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            color: #ffd700;
+            animation: bounceArrow 0.5s infinite alternate;
+        }
+
+        @keyframes bounceArrow {
+            from { transform: translateX(-50%) translateY(0); }
+            to { transform: translateX(-50%) translateY(5px); }
         }
 
         #bucket-rate {
-            color: #fff;
+            color: #1a1a2e;
             font-weight: bold;
-            font-size: 18px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 20px;
         }
 
         /* 落下する数字 */
@@ -158,42 +151,42 @@
             position: absolute;
             padding: 12px 16px;
             border-radius: 12px;
-            font-size: 20px;
+            font-size: 22px;
             font-weight: bold;
             text-align: center;
-            min-width: 60px;
+            min-width: 65px;
             pointer-events: none;
         }
 
         .falling-number.positive {
             background: linear-gradient(135deg, #4ade80, #22c55e);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.4);
+            box-shadow: 0 4px 15px rgba(74, 222, 128, 0.5);
         }
 
         .falling-number.negative {
             background: linear-gradient(135deg, #f87171, #ef4444);
             color: #fff;
-            box-shadow: 0 4px 15px rgba(248, 113, 113, 0.4);
+            box-shadow: 0 4px 15px rgba(248, 113, 113, 0.5);
         }
 
         .falling-number.bonus {
             background: linear-gradient(135deg, #ffd700, #f59e0b);
             color: #1a1a2e;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.6);
+            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.7);
             animation: pulse 0.3s infinite alternate;
         }
 
         @keyframes pulse {
             from { transform: scale(1); }
-            to { transform: scale(1.1); }
+            to { transform: scale(1.15); }
         }
 
         /* キャッチエフェクト */
         .catch-effect {
             position: absolute;
             pointer-events: none;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: bold;
             animation: floatUp 0.8s ease-out forwards;
             z-index: 200;
@@ -205,7 +198,7 @@
 
         @keyframes floatUp {
             0% { opacity: 1; transform: translateY(0) scale(1); }
-            100% { opacity: 0; transform: translateY(-60px) scale(1.5); }
+            100% { opacity: 0; transform: translateY(-80px) scale(1.5); }
         }
 
         /* 画面 */
@@ -233,23 +226,29 @@
         #start-screen h1 {
             font-size: 36px;
             color: #ffd700;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
         }
 
         #start-screen .subtitle {
-            font-size: 16px;
+            font-size: 18px;
             color: #aaa;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
+        }
+
+        #start-screen .highscore {
+            font-size: 16px;
+            color: #4ade80;
+            margin-bottom: 25px;
         }
 
         #start-screen .rules {
             text-align: left;
             color: #888;
             font-size: 14px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             line-height: 2;
-            max-width: 300px;
+            max-width: 280px;
         }
 
         .rules span.green { color: #4ade80; }
@@ -288,7 +287,7 @@
         }
 
         #compound-screen .compound-rate {
-            font-size: 48px;
+            font-size: 42px;
             color: #ffd700;
             font-weight: bold;
             margin-bottom: 30px;
@@ -296,7 +295,7 @@
         }
 
         #compound-screen .compound-money {
-            font-size: 56px;
+            font-size: 48px;
             color: #fff;
             font-weight: bold;
             margin-bottom: 10px;
@@ -304,90 +303,77 @@
         }
 
         #compound-screen .compound-money.growing {
-            transform: scale(1.05);
+            transform: scale(1.08);
             color: #4ade80;
         }
 
         #compound-screen .compound-label {
             font-size: 14px;
             color: #888;
-            margin-bottom: 40px;
-        }
-
-        #compound-screen .skip-hint {
-            font-size: 12px;
-            color: #555;
-            margin-top: 20px;
-        }
-
-        /* ラウンド表示 */
-        #round-display {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 72px;
-            font-weight: bold;
-            color: #ffd700;
-            text-shadow: 0 0 40px rgba(255, 215, 0, 0.8);
-            z-index: 300;
-            animation: roundPop 1.5s ease-out forwards;
-            pointer-events: none;
-        }
-
-        @keyframes roundPop {
-            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-            20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-            40% { transform: translate(-50%, -50%) scale(1); }
-            80% { opacity: 1; }
-            100% { opacity: 0; }
         }
 
         /* リザルト画面 */
         #result-screen h2 {
-            font-size: 36px;
+            font-size: 28px;
             color: #ffd700;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
         #result-screen .result-money {
-            font-size: 42px;
+            font-size: 48px;
             color: #4ade80;
             font-weight: bold;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        #result-screen .new-record {
+            font-size: 24px;
+            color: #ffd700;
+            margin-bottom: 15px;
+            animation: recordPulse 0.5s infinite alternate;
+        }
+
+        @keyframes recordPulse {
+            from { transform: scale(1); opacity: 1; }
+            to { transform: scale(1.1); opacity: 0.8; }
         }
 
         #result-screen .result-stats {
-            font-size: 18px;
-            color: #aaa;
-            margin-bottom: 30px;
-            line-height: 2;
-        }
-
-        #result-screen .message {
             font-size: 16px;
-            color: #888;
-            margin-bottom: 40px;
+            color: #aaa;
+            margin-bottom: 25px;
             line-height: 1.8;
         }
 
-        /* ミス表示 */
-        .miss-indicator {
+        #result-screen .message {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+
+        /* カウントダウン */
+        #countdown {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 48px;
-            color: #f87171;
+            font-size: 120px;
             font-weight: bold;
-            animation: missFlash 0.5s ease-out forwards;
-            z-index: 250;
-            pointer-events: none;
+            color: #ffd700;
+            text-shadow: 0 0 50px rgba(255, 215, 0, 0.8);
+            z-index: 300;
+            animation: countPop 0.5s ease-out;
         }
 
-        @keyframes missFlash {
-            0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-            100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        @keyframes countPop {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .hidden {
+            display: none !important;
         }
     </style>
 </head>
@@ -395,53 +381,47 @@
     <!-- スタート画面 -->
     <div id="start-screen" class="screen">
         <h1>複利キャッチャー</h1>
-        <p class="subtitle">複利の恐ろしさ、体感しろ。</p>
+        <p class="subtitle">21秒で最高金額を目指せ！</p>
+        <p class="highscore">ハイスコア: <span id="highscore-display">¥100</span></p>
         <div class="rules">
-            <strong style="color:#fff">【ルール】</strong><br>
-            1. バケツを<span class="gold">左右にスライド</span>して操作<br>
-            2. <span class="green">緑</span>と<span class="gold">金</span>をキャッチ、<span class="red">赤</span>は避けろ<br>
-            3. 収集後、<span class="gold">複利タイム</span>で増える<br>
-            4. 目標: <span class="gold">1億円</span>到達<br><br>
-            <span class="red">※全部は取れない。選べ。</span>
+            <span class="gold">■ 金のバケツ</span>を左右に動かせ<br>
+            <span class="green">■ 緑</span>と<span class="gold">金</span>をキャッチ！<br>
+            <span class="red">■ 赤</span>は避けろ（利率ダウン）<br>
+            21秒後、複利で資産が爆増！
         </div>
         <button class="btn btn-start" onclick="startGame()">START</button>
     </div>
 
     <!-- 複利フェーズ画面 -->
     <div id="compound-screen" class="screen hidden">
-        <h2>💰 複利タイム 💰</h2>
-        <div class="compound-rate">+0.0%/秒</div>
+        <h2>複利タイム</h2>
+        <div class="compound-rate">+0.0%</div>
         <div class="compound-money">¥100</div>
-        <div class="compound-label">増えていく...</div>
-        <p class="skip-hint">タップでスキップ</p>
+        <div class="compound-label">10年分の複利を体感...</div>
     </div>
 
     <!-- リザルト画面 -->
     <div id="result-screen" class="screen hidden">
-        <h2>CLEAR!</h2>
-        <div class="result-money">¥100,000,000</div>
+        <h2>結果発表</h2>
+        <div class="result-money">¥100</div>
+        <div class="new-record hidden">NEW RECORD!</div>
         <div class="result-stats"></div>
         <p class="message"></p>
         <button class="btn btn-start" onclick="startGame()">もう一回</button>
     </div>
 
-    <!-- ラウンド表示 -->
-    <div id="round-display" class="hidden"></div>
+    <!-- カウントダウン -->
+    <div id="countdown" class="hidden"></div>
 
     <!-- ゲーム画面 -->
     <div id="game-container">
         <div id="status">
-            <div id="phase-indicator">ROUND 1 - 収集フェーズ</div>
-            <div id="money">¥100</div>
-            <div id="stats">
-                <span id="rate">利率: +0.0%</span>
-                <span id="timer">30秒</span>
+            <div id="top-row">
+                <div id="timer-display">21</div>
+                <div id="rate-display">+0%</div>
             </div>
             <div id="timer-bar-container">
                 <div id="timer-bar"></div>
-            </div>
-            <div id="progress-container">
-                <div id="progress-bar"></div>
             </div>
         </div>
         <div id="bucket">
@@ -453,15 +433,15 @@
         // ゲーム設定
         const CONFIG = {
             INITIAL_MONEY: 100,
-            TARGET_MONEY: 100000000,
-            COLLECT_DURATION: 20, // 収集フェーズの秒数
-            COMPOUND_DURATION: 8, // 複利フェーズの秒数
-            SPAWN_INTERVAL_BASE: 600, // 基本スポーン間隔
-            SPAWN_INTERVAL_MIN: 300, // 最小スポーン間隔
-            FALL_SPEED_BASE: 3,
-            FALL_SPEED_MAX: 6,
-            BUCKET_WIDTH: 100,
+            GAME_DURATION: 21,
+            COMPOUND_YEARS: 10, // 10年分の複利
+            SPAWN_INTERVAL: 500,
+            FALL_SPEED: 4,
+            BUCKET_WIDTH: 120,
         };
+
+        // ハイスコア
+        let highScore = parseInt(localStorage.getItem('fukuri-highscore')) || CONFIG.INITIAL_MONEY;
 
         // サウンド
         const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -500,15 +480,6 @@
                     oscillator.start(audioCtx.currentTime);
                     oscillator.stop(audioCtx.currentTime + 0.35);
                     break;
-                case 'miss':
-                    oscillator.type = 'sawtooth';
-                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
-                    oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
-                    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
-                    oscillator.start(audioCtx.currentTime);
-                    oscillator.stop(audioCtx.currentTime + 0.2);
-                    break;
                 case 'negative':
                     oscillator.type = 'square';
                     oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
@@ -519,13 +490,29 @@
                     break;
                 case 'compound':
                     oscillator.type = 'sine';
-                    oscillator.frequency.setValueAtTime(440, audioCtx.currentTime);
-                    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.08);
+                    oscillator.frequency.setValueAtTime(440 + Math.random() * 200, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
                     oscillator.start(audioCtx.currentTime);
-                    oscillator.stop(audioCtx.currentTime + 0.08);
+                    oscillator.stop(audioCtx.currentTime + 0.1);
                     break;
-                case 'levelup':
+                case 'countdown':
+                    oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.2);
+                    break;
+                case 'start':
+                    oscillator.frequency.setValueAtTime(523, audioCtx.currentTime);
+                    oscillator.frequency.setValueAtTime(784, audioCtx.currentTime + 0.1);
+                    oscillator.frequency.setValueAtTime(1047, audioCtx.currentTime + 0.2);
+                    gainNode.gain.setValueAtTime(0.4, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    oscillator.start(audioCtx.currentTime);
+                    oscillator.stop(audioCtx.currentTime + 0.4);
+                    break;
+                case 'finish':
                     const osc1 = audioCtx.createOscillator();
                     const gain1 = audioCtx.createGain();
                     osc1.connect(gain1);
@@ -544,15 +531,11 @@
 
         // ゲーム状態
         let gameState = {
-            money: CONFIG.INITIAL_MONEY,
-            totalRate: 0,
-            round: 1,
-            roundRate: 0, // このラウンドで集めた利率
-            phase: 'idle', // idle, collect, compound
-            timeLeft: 0,
+            rate: 0,
+            phase: 'idle',
+            timeLeft: CONFIG.GAME_DURATION,
             fallingNumbers: [],
             bucketX: 0,
-            startTime: 0,
             spawnTimer: null,
             gameTimer: null,
             animationFrame: null,
@@ -563,18 +546,20 @@
             startScreen: document.getElementById('start-screen'),
             compoundScreen: document.getElementById('compound-screen'),
             resultScreen: document.getElementById('result-screen'),
-            roundDisplay: document.getElementById('round-display'),
+            countdown: document.getElementById('countdown'),
             gameContainer: document.getElementById('game-container'),
-            status: document.getElementById('status'),
-            phaseIndicator: document.getElementById('phase-indicator'),
-            money: document.getElementById('money'),
-            rate: document.getElementById('rate'),
-            timer: document.getElementById('timer'),
+            timerDisplay: document.getElementById('timer-display'),
+            rateDisplay: document.getElementById('rate-display'),
             timerBar: document.getElementById('timer-bar'),
-            progressBar: document.getElementById('progress-bar'),
             bucket: document.getElementById('bucket'),
             bucketRate: document.getElementById('bucket-rate'),
+            highscoreDisplay: document.getElementById('highscore-display'),
         };
+
+        // ハイスコア表示を更新
+        function updateHighscoreDisplay() {
+            elements.highscoreDisplay.textContent = formatMoney(highScore);
+        }
 
         // バケツ操作
         let isDragging = false;
@@ -606,7 +591,6 @@
             const deltaX = currentX - dragStartX;
             let newX = bucketStartX + deltaX;
 
-            // 画面内に制限
             const maxX = window.innerWidth - CONFIG.BUCKET_WIDTH;
             newX = Math.max(0, Math.min(maxX, newX));
 
@@ -618,7 +602,7 @@
             isDragging = false;
         }
 
-        // イベントリスナー設定
+        // イベントリスナー
         document.addEventListener('mousedown', handleDragStart);
         document.addEventListener('mousemove', handleDragMove);
         document.addEventListener('mouseup', handleDragEnd);
@@ -626,34 +610,22 @@
         document.addEventListener('touchmove', handleDragMove, { passive: false });
         document.addEventListener('touchend', handleDragEnd);
 
-        // 複利画面のスキップ
-        elements.compoundScreen.addEventListener('click', () => {
-            if (gameState.phase === 'compound') {
-                skipCompoundPhase();
-            }
-        });
-
         // ゲーム開始
         function startGame() {
             initAudio();
 
             gameState = {
-                money: CONFIG.INITIAL_MONEY,
-                totalRate: 0,
-                round: 1,
-                roundRate: 0,
+                rate: 0,
                 phase: 'idle',
-                timeLeft: 0,
+                timeLeft: CONFIG.GAME_DURATION,
                 fallingNumbers: [],
                 bucketX: gameState.bucketX,
-                startTime: Date.now(),
                 spawnTimer: null,
                 gameTimer: null,
                 animationFrame: null,
             };
 
-            // 画面をクリア
-            document.querySelectorAll('.falling-number, .catch-effect, .miss-indicator').forEach(el => el.remove());
+            document.querySelectorAll('.falling-number, .catch-effect').forEach(el => el.remove());
 
             elements.startScreen.classList.add('hidden');
             elements.resultScreen.classList.add('hidden');
@@ -662,47 +634,56 @@
             initBucket();
             updateUI();
 
-            // ラウンド1開始
-            showRound(1);
-            setTimeout(() => startCollectPhase(), 1500);
+            // カウントダウン開始
+            startCountdown();
         }
 
-        // ラウンド表示
-        function showRound(num) {
-            elements.roundDisplay.textContent = `ROUND ${num}`;
-            elements.roundDisplay.classList.remove('hidden');
-            playSound('levelup');
-            setTimeout(() => {
-                elements.roundDisplay.classList.add('hidden');
-            }, 1500);
+        // カウントダウン
+        function startCountdown() {
+            let count = 3;
+            elements.countdown.classList.remove('hidden');
+            elements.countdown.textContent = count;
+            playSound('countdown');
+
+            const countInterval = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    elements.countdown.textContent = count;
+                    elements.countdown.style.animation = 'none';
+                    elements.countdown.offsetHeight;
+                    elements.countdown.style.animation = 'countPop 0.5s ease-out';
+                    playSound('countdown');
+                } else {
+                    elements.countdown.textContent = 'GO!';
+                    elements.countdown.style.animation = 'none';
+                    elements.countdown.offsetHeight;
+                    elements.countdown.style.animation = 'countPop 0.5s ease-out';
+                    playSound('start');
+                    clearInterval(countInterval);
+                    setTimeout(() => {
+                        elements.countdown.classList.add('hidden');
+                        startCollectPhase();
+                    }, 500);
+                }
+            }, 700);
         }
 
         // 収集フェーズ開始
         function startCollectPhase() {
             gameState.phase = 'collect';
-            gameState.roundRate = 0;
-            gameState.timeLeft = CONFIG.COLLECT_DURATION;
+            gameState.timeLeft = CONFIG.GAME_DURATION;
 
-            elements.phaseIndicator.textContent = `ROUND ${gameState.round} - 収集フェーズ`;
-            elements.phaseIndicator.className = 'collect';
-
-            // 難易度調整（ラウンドが進むほど難しく）
-            const difficulty = Math.min(gameState.round - 1, 5);
-            const spawnInterval = Math.max(
-                CONFIG.SPAWN_INTERVAL_MIN,
-                CONFIG.SPAWN_INTERVAL_BASE - difficulty * 50
-            );
-
-            gameState.spawnTimer = setInterval(spawnNumber, spawnInterval);
-            gameState.gameTimer = setInterval(updateCollectTimer, 100);
+            gameState.spawnTimer = setInterval(spawnNumber, CONFIG.SPAWN_INTERVAL);
+            gameState.gameTimer = setInterval(updateTimer, 100);
             gameLoop();
         }
 
-        // 収集タイマー更新
-        function updateCollectTimer() {
+        // タイマー更新
+        function updateTimer() {
             gameState.timeLeft -= 0.1;
 
             if (gameState.timeLeft <= 0) {
+                gameState.timeLeft = 0;
                 endCollectPhase();
             }
 
@@ -715,95 +696,96 @@
             clearInterval(gameState.gameTimer);
             cancelAnimationFrame(gameState.animationFrame);
 
-            // 残った数字を消す
             document.querySelectorAll('.falling-number').forEach(el => el.remove());
             gameState.fallingNumbers = [];
 
-            // 利率を加算
-            gameState.totalRate += gameState.roundRate;
-
-            // 複利フェーズへ
+            playSound('finish');
             startCompoundPhase();
         }
 
-        // 複利フェーズ開始
+        // 複利フェーズ
         function startCompoundPhase() {
             gameState.phase = 'compound';
 
-            elements.phaseIndicator.textContent = `ROUND ${gameState.round} - 複利タイム`;
-            elements.phaseIndicator.className = 'compound';
-
-            // 複利画面表示
             const compoundScreen = elements.compoundScreen;
             compoundScreen.classList.remove('hidden');
             compoundScreen.querySelector('.compound-rate').textContent =
-                `+${(gameState.totalRate * 100).toFixed(1)}%/秒`;
+                `年利 ${gameState.rate >= 0 ? '+' : ''}${(gameState.rate * 100).toFixed(1)}%`;
 
-            // 複利計算アニメーション
-            let elapsed = 0;
+            let money = CONFIG.INITIAL_MONEY;
+            let year = 0;
+            const totalYears = CONFIG.COMPOUND_YEARS;
+
+            const moneyEl = compoundScreen.querySelector('.compound-money');
+            const labelEl = compoundScreen.querySelector('.compound-label');
+
+            moneyEl.textContent = formatMoney(money);
+            labelEl.textContent = `${year}年目...`;
+
             const compoundInterval = setInterval(() => {
-                elapsed += 0.1;
-
-                // 複利適用
-                gameState.money *= (1 + gameState.totalRate / 10);
+                year++;
+                money *= (1 + gameState.rate);
 
                 playSound('compound');
 
-                // 表示更新
-                const moneyEl = compoundScreen.querySelector('.compound-money');
-                moneyEl.textContent = formatMoney(gameState.money);
+                moneyEl.textContent = formatMoney(money);
                 moneyEl.classList.add('growing');
                 setTimeout(() => moneyEl.classList.remove('growing'), 100);
 
-                updateUI();
+                labelEl.textContent = `${year}年目...`;
 
-                // クリアチェック
-                if (gameState.money >= CONFIG.TARGET_MONEY) {
+                if (year >= totalYears) {
                     clearInterval(compoundInterval);
-                    setTimeout(() => endGame(true), 500);
-                    return;
-                }
-
-                // 複利フェーズ終了
-                if (elapsed >= CONFIG.COMPOUND_DURATION) {
-                    clearInterval(compoundInterval);
+                    labelEl.textContent = `${totalYears}年後の資産！`;
                     setTimeout(() => {
                         compoundScreen.classList.add('hidden');
-                        gameState.round++;
-                        showRound(gameState.round);
-                        setTimeout(() => startCollectPhase(), 1500);
-                    }, 500);
+                        showResult(money);
+                    }, 1000);
                 }
-            }, 100);
-
-            gameState.compoundInterval = compoundInterval;
+            }, 300);
         }
 
-        // 複利フェーズスキップ
-        function skipCompoundPhase() {
-            if (gameState.compoundInterval) {
-                clearInterval(gameState.compoundInterval);
+        // 結果表示
+        function showResult(finalMoney) {
+            gameState.phase = 'idle';
+
+            const isNewRecord = finalMoney > highScore;
+            if (isNewRecord) {
+                highScore = Math.floor(finalMoney);
+                localStorage.setItem('fukuri-highscore', highScore);
+                updateHighscoreDisplay();
             }
 
-            // 残りの複利を一気に適用
-            const remainingTime = CONFIG.COMPOUND_DURATION;
-            for (let i = 0; i < remainingTime * 10; i++) {
-                gameState.money *= (1 + gameState.totalRate / 10);
-                if (gameState.money >= CONFIG.TARGET_MONEY) break;
+            const resultScreen = elements.resultScreen;
+            resultScreen.querySelector('.result-money').textContent = formatMoney(finalMoney);
+
+            const newRecordEl = resultScreen.querySelector('.new-record');
+            if (isNewRecord) {
+                newRecordEl.classList.remove('hidden');
+            } else {
+                newRecordEl.classList.add('hidden');
             }
 
-            updateUI();
+            resultScreen.querySelector('.result-stats').innerHTML = `
+                最終利率: ${gameState.rate >= 0 ? '+' : ''}${(gameState.rate * 100).toFixed(1)}%/年<br>
+                ハイスコア: ${formatMoney(highScore)}
+            `;
 
-            if (gameState.money >= CONFIG.TARGET_MONEY) {
-                elements.compoundScreen.classList.add('hidden');
-                endGame(true);
-                return;
+            let message = '';
+            if (finalMoney >= 10000000) {
+                message = '複利の魔法使い！\n10年で100円が' + formatMoney(finalMoney) + 'に！';
+            } else if (finalMoney >= 1000000) {
+                message = '複利の力、感じたか？\nコツコツが大事。';
+            } else if (finalMoney >= 10000) {
+                message = 'まあまあだな。\n次はもっと緑を集めろ！';
+            } else if (finalMoney >= CONFIG.INITIAL_MONEY) {
+                message = 'プラスで終われた。\nでも、もっといけるはず！';
+            } else {
+                message = 'マイナス金利の恐怖...\n赤を避けろ！';
             }
+            resultScreen.querySelector('.message').textContent = message;
 
-            elements.compoundScreen.classList.add('hidden');
-            gameState.round++;
-            showRound(gameState.round);
-            setTimeout(() => startCollectPhase(), 1500);
+            resultScreen.classList.remove('hidden');
         }
 
         // 数字を生成
@@ -811,32 +793,30 @@
             if (gameState.phase !== 'collect') return;
 
             const gameArea = elements.gameContainer.getBoundingClientRect();
-            const statusHeight = elements.status.offsetHeight;
+            const statusHeight = document.getElementById('status').offsetHeight;
 
-            // 複数同時に落とす（ラウンドが進むと増える）
-            const numToSpawn = Math.random() < 0.3 + gameState.round * 0.1 ? 2 : 1;
+            // 複数同時に落とす
+            const numToSpawn = Math.random() < 0.4 ? 2 : 1;
 
             for (let i = 0; i < numToSpawn; i++) {
-                // 種類を決定
                 const rand = Math.random();
                 let type, value;
 
-                if (rand < 0.1) {
+                if (rand < 0.08) {
                     type = 'bonus';
-                    value = Math.floor(Math.random() * 3 + 5); // 5-7%
-                } else if (rand < 0.3) {
+                    value = Math.floor(Math.random() * 10 + 10); // 10-19%
+                } else if (rand < 0.30) {
                     type = 'negative';
-                    value = -Math.floor(Math.random() * 3 + 2); // -2 to -4%
+                    value = -Math.floor(Math.random() * 8 + 3); // -3 to -10%
                 } else {
                     type = 'positive';
-                    value = Math.floor(Math.random() * 3 + 1); // 1-3%
+                    value = Math.floor(Math.random() * 5 + 1); // 1-5%
                 }
 
                 const el = document.createElement('div');
                 el.className = `falling-number ${type}`;
                 el.textContent = (value > 0 ? '+' : '') + value + '%';
 
-                // 位置をずらして配置
                 const xPos = Math.random() * (gameArea.width - 70);
                 el.style.left = xPos + 'px';
                 el.style.top = statusHeight + 'px';
@@ -858,39 +838,27 @@
             if (gameState.phase !== 'collect') return;
 
             const gameArea = elements.gameContainer.getBoundingClientRect();
-            const bucketTop = gameArea.height - 100;
+            const bucketTop = gameArea.height - 110;
             const bucketLeft = gameState.bucketX;
             const bucketRight = bucketLeft + CONFIG.BUCKET_WIDTH;
 
-            // 難易度に応じた落下速度
-            const fallSpeed = Math.min(
-                CONFIG.FALL_SPEED_MAX,
-                CONFIG.FALL_SPEED_BASE + gameState.round * 0.3
-            );
-
             gameState.fallingNumbers.forEach((num, index) => {
-                num.y += fallSpeed;
+                num.y += CONFIG.FALL_SPEED;
                 num.element.style.top = num.y + 'px';
 
-                const numCenterX = num.x + 30;
+                const numCenterX = num.x + 32;
                 const numBottom = num.y + 50;
 
                 // バケツとの衝突判定
-                if (numBottom >= bucketTop && numBottom <= bucketTop + 30) {
+                if (numBottom >= bucketTop && numBottom <= bucketTop + 40) {
                     if (numCenterX >= bucketLeft && numCenterX <= bucketRight) {
-                        // キャッチ成功
                         onCatch(num, index);
                         return;
                     }
                 }
 
-                // 画面外に落ちた
+                // 画面外
                 if (num.y > gameArea.height) {
-                    // プラスの数字を落としたらペナルティ表示
-                    if (num.value > 0) {
-                        showMissIndicator();
-                        playSound('miss');
-                    }
                     num.element.remove();
                     gameState.fallingNumbers.splice(index, 1);
                 }
@@ -901,12 +869,10 @@
 
         // キャッチ処理
         function onCatch(num, index) {
-            gameState.roundRate += num.value / 100;
+            gameState.rate += num.value / 100;
 
-            // エフェクト
-            showCatchEffect(num.x + 30, num.y, num.value, num.type);
+            showCatchEffect(num.x + 32, num.y, num.value, num.type);
 
-            // サウンド
             if (num.type === 'bonus') {
                 playSound('bonus');
             } else if (num.type === 'negative') {
@@ -932,98 +898,45 @@
             setTimeout(() => effect.remove(), 800);
         }
 
-        // ミス表示
-        function showMissIndicator() {
-            const miss = document.createElement('div');
-            miss.className = 'miss-indicator';
-            miss.textContent = 'MISS!';
-            document.body.appendChild(miss);
-            setTimeout(() => miss.remove(), 500);
-        }
-
         // UI更新
         function updateUI() {
-            // お金表示
-            elements.money.textContent = formatMoney(gameState.money);
-
-            // 利率表示
-            const displayRate = gameState.phase === 'collect'
-                ? gameState.totalRate + gameState.roundRate
-                : gameState.totalRate;
-            elements.rate.textContent = `利率: ${displayRate >= 0 ? '+' : ''}${(displayRate * 100).toFixed(1)}%`;
-            elements.rate.classList.toggle('negative', displayRate < 0);
-
-            // バケツの利率表示
-            const bucketRateText = gameState.roundRate >= 0
-                ? `+${(gameState.roundRate * 100).toFixed(0)}%`
-                : `${(gameState.roundRate * 100).toFixed(0)}%`;
-            elements.bucketRate.textContent = bucketRateText;
-
             // タイマー
-            elements.timer.textContent = `${Math.ceil(gameState.timeLeft)}秒`;
+            const timeInt = Math.ceil(gameState.timeLeft);
+            elements.timerDisplay.textContent = timeInt;
+            elements.timerDisplay.classList.toggle('danger', timeInt <= 5);
 
             // タイマーバー
-            const timerPercent = (gameState.timeLeft / CONFIG.COLLECT_DURATION) * 100;
+            const timerPercent = (gameState.timeLeft / CONFIG.GAME_DURATION) * 100;
             elements.timerBar.style.width = timerPercent + '%';
-            elements.timerBar.classList.toggle('danger', timerPercent < 30);
+            elements.timerBar.classList.toggle('danger', timerPercent < 25);
 
-            // プログレスバー
-            const progress = Math.min(100, (Math.log10(Math.max(1, gameState.money)) / Math.log10(CONFIG.TARGET_MONEY)) * 100);
-            elements.progressBar.style.width = progress + '%';
+            // 利率表示
+            const ratePercent = (gameState.rate * 100).toFixed(0);
+            elements.rateDisplay.textContent = `${gameState.rate >= 0 ? '+' : ''}${ratePercent}%`;
+            elements.rateDisplay.classList.toggle('negative', gameState.rate < 0);
+
+            // バケツの利率表示
+            elements.bucketRate.textContent = `${gameState.rate >= 0 ? '+' : ''}${ratePercent}%`;
         }
 
         // お金フォーマット
         function formatMoney(amount) {
             if (amount >= 100000000) {
                 return '¥' + (amount / 100000000).toFixed(2) + '億';
+            } else if (amount >= 10000000) {
+                return '¥' + (amount / 10000).toFixed(0) + '万';
             } else if (amount >= 10000) {
                 return '¥' + Math.floor(amount).toLocaleString();
+            } else if (amount >= 100) {
+                return '¥' + Math.floor(amount);
             } else {
-                return '¥' + amount.toFixed(0);
+                return '¥' + amount.toFixed(1);
             }
-        }
-
-        // ゲーム終了
-        function endGame(isCleared) {
-            gameState.phase = 'idle';
-
-            clearInterval(gameState.spawnTimer);
-            clearInterval(gameState.gameTimer);
-            cancelAnimationFrame(gameState.animationFrame);
-
-            const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
-            const minutes = Math.floor(elapsed / 60);
-            const seconds = elapsed % 60;
-
-            const resultScreen = elements.resultScreen;
-            resultScreen.querySelector('h2').textContent = isCleared ? '🎉 1億円達成！ 🎉' : '破産...';
-            resultScreen.querySelector('.result-money').textContent = formatMoney(gameState.money);
-            resultScreen.querySelector('.result-stats').innerHTML = `
-                クリアタイム: ${minutes}分${seconds}秒<br>
-                最終利率: +${(gameState.totalRate * 100).toFixed(1)}%/秒<br>
-                ラウンド数: ${gameState.round}
-            `;
-
-            let message = '';
-            if (isCleared) {
-                if (gameState.round <= 3) {
-                    message = '複利マスター！効率よく利率を集めたな。';
-                } else if (gameState.round <= 5) {
-                    message = '複利の力、理解したか？\n最初は地味、後から来る。';
-                } else {
-                    message = 'コツコツ積み上げた結果だ。\nこれが複利の真髄。';
-                }
-            } else {
-                message = 'マイナス金利の恐怖...\n次は赤を避けろ！';
-            }
-            resultScreen.querySelector('.message').textContent = message;
-
-            playSound('levelup');
-            resultScreen.classList.remove('hidden');
         }
 
         // 初期化
         initBucket();
+        updateHighscoreDisplay();
         updateUI();
     </script>
 </body>
