@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Runner Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            touch-action: none;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        /* UI Overlay */
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #distance {
+            position: absolute;
+            top: 75px;
+            left: 20px;
+            color: white;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #hint {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.8);
+            font-size: 18px;
+            text-align: center;
+            transition: opacity 0.5s;
+        }
+
+        #goal-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #goal-screen h1 {
+            color: #FFD700;
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+
+        #goal-screen .final-score {
+            color: white;
+            font-size: 36px;
+            margin-bottom: 40px;
+        }
+
+        #retry-btn {
+            padding: 20px 60px;
+            font-size: 24px;
+            background: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        #retry-btn:active {
+            background: #357ABD;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui">
+            <div id="score">×10</div>
+            <div id="distance">0.0m</div>
+            <div id="hint">← 左右スワイプで移動 →</div>
+
+            <div id="goal-screen">
+                <h1>🎉 GOAL! 🎉</h1>
+                <div class="final-score">Final Score: ×<span id="final-score-value">0</span></div>
+                <button id="retry-btn">もう一度プレイ</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Three.js r128 from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    const CONFIG = {
+        // Performance limits
+        MAX_RENDERED_BALLS: 100,
+        MAX_RENDERED_PARTICLES: 50,
+        MAX_GATES_IN_SCENE: 4,
+
+        // Speed settings
+        SPEED: {
+            INITIAL: 0.12,
+            ACCELERATION: 0.00005,
+            MAX: 0.20
+        },
+
+        // Game settings
+        GOAL_DISTANCE: 15,      // meters
+        GATE_INTERVAL: 1.5,     // meters between gates
+        LANE_WIDTH: 3,          // x position for left/right lanes
+
+        // Ball settings
+        BALL_RADIUS: 0.15,
+        BALL_SPACING: 0.8,
+
+        // Gate settings
+        GATE_WIDTH: 3,
+        GATE_HEIGHT: 3,
+        GATE_DEPTH: 0.5
+    };
+
+    // ========================================
+    // GAME STATE
+    // ========================================
+    let gameState = {
+        score: 10,
+        distance: 0,
+        speed: CONFIG.SPEED.INITIAL,
+        isPlaying: true,
+        playerX: 0,
+        targetX: 0
+    };
+
+    // ========================================
+    // THREE.JS SETUP
+    // ========================================
+    const container = document.getElementById('game-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.Fog(0x1a1a2e, 5, 30);
+
+    // Camera
+    const camera = new THREE.PerspectiveCamera(
+        75,
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+    );
+    camera.position.set(0, 3, -5);
+    camera.lookAt(0, 0.5, 10);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.insertBefore(renderer.domElement, container.firstChild);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    directionalLight.position.set(5, 10, -5);
+    scene.add(directionalLight);
+
+    // ========================================
+    // GROUND (Infinite runner track)
+    // ========================================
+    const groundGeometry = new THREE.PlaneGeometry(12, 100);
+    const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x2d2d44,
+        roughness: 0.8
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.z = 30;
+    scene.add(ground);
+
+    // Lane markers
+    const lineGeometry = new THREE.PlaneGeometry(0.1, 100);
+    const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x4a4a6a });
+
+    for (let x = -6; x <= 6; x += 3) {
+        const line = new THREE.Mesh(lineGeometry, lineMaterial);
+        line.rotation.x = -Math.PI / 2;
+        line.position.set(x, 0.01, 30);
+        scene.add(line);
+    }
+
+    // ========================================
+    // PLAYER BALL
+    // ========================================
+    const ballGeometry = new THREE.SphereGeometry(CONFIG.BALL_RADIUS, 16, 16);
+    const ballMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4A90E2,
+        emissive: 0x4A90E2,
+        emissiveIntensity: 0.3,
+        roughness: 0.2,
+        metalness: 0.8
+    });
+
+    const playerBall = new THREE.Mesh(ballGeometry, ballMaterial);
+    playerBall.position.set(0, CONFIG.BALL_RADIUS, 0);
+    scene.add(playerBall);
+
+    // Ball point light
+    const ballLight = new THREE.PointLight(0x4A90E2, 0.5, 3);
+    playerBall.add(ballLight);
+
+    // ========================================
+    // GATES
+    // ========================================
+    const gates = [];
+
+    function createGate(x, z, effect, isGood) {
+        const group = new THREE.Group();
+
+        // Gate frame
+        const frameGeometry = new THREE.BoxGeometry(
+            CONFIG.GATE_WIDTH,
+            CONFIG.GATE_HEIGHT,
+            CONFIG.GATE_DEPTH
+        );
+        const frameMaterial = new THREE.MeshStandardMaterial({
+            color: isGood ? 0x4A90E2 : 0xFF4444,
+            emissive: isGood ? 0x4A90E2 : 0xFF4444,
+            emissiveIntensity: 0.3,
+            transparent: true,
+            opacity: 0.6,
+            roughness: 0.3
+        });
+
+        const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+        group.add(frame);
+
+        // Effect text (using sprite for simplicity)
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 64px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(effect, 128, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        const spriteMaterial = new THREE.SpriteMaterial({
+            map: texture,
+            transparent: true
+        });
+        const sprite = new THREE.Sprite(spriteMaterial);
+        sprite.scale.set(2, 1, 1);
+        sprite.position.z = CONFIG.GATE_DEPTH / 2 + 0.1;
+        group.add(sprite);
+
+        group.position.set(x, CONFIG.GATE_HEIGHT / 2, z);
+        group.userData = {
+            effect: effect,
+            isGood: isGood,
+            passed: false
+        };
+
+        scene.add(group);
+        gates.push(group);
+
+        return group;
+    }
+
+    // Create initial gates (Step 1: fixed position)
+    createGate(-CONFIG.LANE_WIDTH, 8, '×2', true);
+    createGate(CONFIG.LANE_WIDTH, 8, '÷2', false);
+
+    // ========================================
+    // TOUCH/MOUSE CONTROLS
+    // ========================================
+    let touchStartX = 0;
+    let isDragging = false;
+
+    function handleStart(clientX) {
+        touchStartX = clientX;
+        isDragging = true;
+    }
+
+    function handleMove(clientX) {
+        if (!isDragging || !gameState.isPlaying) return;
+
+        const deltaX = (clientX - touchStartX) * 0.02;
+        gameState.targetX = Math.max(-5, Math.min(5, gameState.targetX + deltaX));
+        touchStartX = clientX;
+    }
+
+    function handleEnd() {
+        isDragging = false;
+    }
+
+    // Touch events
+    renderer.domElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleStart(e.touches[0].clientX);
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX);
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchend', handleEnd);
+
+    // Mouse events (for desktop testing)
+    renderer.domElement.addEventListener('mousedown', (e) => handleStart(e.clientX));
+    renderer.domElement.addEventListener('mousemove', (e) => handleMove(e.clientX));
+    renderer.domElement.addEventListener('mouseup', handleEnd);
+    renderer.domElement.addEventListener('mouseleave', handleEnd);
+
+    // ========================================
+    // UI UPDATES
+    // ========================================
+    const scoreEl = document.getElementById('score');
+    const distanceEl = document.getElementById('distance');
+    const hintEl = document.getElementById('hint');
+    const goalScreen = document.getElementById('goal-screen');
+    const finalScoreEl = document.getElementById('final-score-value');
+    const retryBtn = document.getElementById('retry-btn');
+
+    function updateUI() {
+        scoreEl.textContent = `×${Math.floor(gameState.score)}`;
+        distanceEl.textContent = `${gameState.distance.toFixed(1)}m`;
+    }
+
+    // Hide hint after 3 seconds
+    setTimeout(() => {
+        hintEl.style.opacity = '0';
+    }, 3000);
+
+    // ========================================
+    // GAME LOOP
+    // ========================================
+    function gameLoop() {
+        requestAnimationFrame(gameLoop);
+
+        if (!gameState.isPlaying) {
+            renderer.render(scene, camera);
+            return;
+        }
+
+        // Update speed (slight acceleration)
+        gameState.speed = Math.min(
+            CONFIG.SPEED.MAX,
+            gameState.speed + CONFIG.SPEED.ACCELERATION
+        );
+
+        // Update distance
+        gameState.distance += gameState.speed;
+
+        // Smooth player X movement
+        gameState.playerX += (gameState.targetX - gameState.playerX) * 0.15;
+        playerBall.position.x = gameState.playerX;
+
+        // Move camera and ground with player
+        camera.position.x = gameState.playerX * 0.3;
+
+        // Check gate collisions
+        gates.forEach(gate => {
+            if (gate.userData.passed) return;
+
+            const ballZ = gameState.distance;
+            const gateZ = gate.position.z;
+
+            // Check if passed through gate
+            if (ballZ > gateZ - 0.5 && ballZ < gateZ + 0.5) {
+                const gateX = gate.position.x;
+                const distance = Math.abs(gameState.playerX - gateX);
+
+                if (distance < CONFIG.GATE_WIDTH / 2) {
+                    gate.userData.passed = true;
+
+                    // Apply effect
+                    const effect = gate.userData.effect;
+                    if (effect.startsWith('×')) {
+                        const multiplier = parseFloat(effect.substring(1));
+                        gameState.score *= multiplier;
+                    } else if (effect.startsWith('÷')) {
+                        const divisor = parseFloat(effect.substring(1));
+                        gameState.score /= divisor;
+                    } else if (effect.startsWith('+')) {
+                        const add = parseFloat(effect.substring(1));
+                        gameState.score += add;
+                    } else if (effect.startsWith('-')) {
+                        const sub = parseFloat(effect.substring(1));
+                        gameState.score -= sub;
+                    }
+
+                    gameState.score = Math.max(1, gameState.score);
+
+                    // Visual feedback (simple for Step 1)
+                    gate.visible = false;
+
+                    console.log(`Passed gate: ${effect}, Score: ${gameState.score}`);
+                }
+            }
+        });
+
+        // Update gate positions (move towards camera)
+        gates.forEach(gate => {
+            gate.position.z = gate.userData.originalZ !== undefined
+                ? gate.userData.originalZ - gameState.distance
+                : gate.position.z;
+        });
+
+        // Initialize original Z if not set
+        gates.forEach(gate => {
+            if (gate.userData.originalZ === undefined) {
+                gate.userData.originalZ = gate.position.z + gameState.distance;
+            }
+        });
+
+        // Check goal
+        if (gameState.distance >= CONFIG.GOAL_DISTANCE) {
+            showGoal();
+        }
+
+        // Update UI
+        updateUI();
+
+        // Render
+        renderer.render(scene, camera);
+    }
+
+    // ========================================
+    // GOAL & RESTART
+    // ========================================
+    function showGoal() {
+        gameState.isPlaying = false;
+        finalScoreEl.textContent = Math.floor(gameState.score);
+        goalScreen.style.display = 'flex';
+    }
+
+    function restart() {
+        // Reset state
+        gameState = {
+            score: 10,
+            distance: 0,
+            speed: CONFIG.SPEED.INITIAL,
+            isPlaying: true,
+            playerX: 0,
+            targetX: 0
+        };
+
+        // Reset player position
+        playerBall.position.x = 0;
+
+        // Reset gates
+        gates.forEach(gate => {
+            gate.userData.passed = false;
+            gate.visible = true;
+            delete gate.userData.originalZ;
+        });
+
+        // Hide goal screen
+        goalScreen.style.display = 'none';
+
+        // Show hint again
+        hintEl.style.opacity = '1';
+        setTimeout(() => {
+            hintEl.style.opacity = '0';
+        }, 3000);
+    }
+
+    retryBtn.addEventListener('click', restart);
+
+    // ========================================
+    // RESIZE HANDLER
+    // ========================================
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ========================================
+    // START GAME
+    // ========================================
+    console.log('🎮 Runner Game - Step 1 Prototype');
+    console.log('Controls: Swipe left/right or drag with mouse');
+    gameLoop();
+    </script>
+</body>
+</html>
