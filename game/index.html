@@ -46,6 +46,11 @@
             font-size: 48px;
             font-weight: bold;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            transition: transform 0.15s ease-out;
+        }
+
+        #score.pulse {
+            transform: scale(1.3);
         }
 
         #distance {
@@ -54,6 +59,15 @@
             left: 20px;
             color: white;
             font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #ball-count {
+            position: absolute;
+            top: 105px;
+            left: 20px;
+            color: #4A90E2;
+            font-size: 18px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
         }
 
@@ -115,10 +129,11 @@
         <div id="ui">
             <div id="score">×10</div>
             <div id="distance">0.0m</div>
+            <div id="ball-count">10 balls</div>
             <div id="hint">← 左右スワイプで移動 →</div>
 
             <div id="goal-screen">
-                <h1>🎉 GOAL! 🎉</h1>
+                <h1>GOAL!</h1>
                 <div class="final-score">Final Score: ×<span id="final-score-value">0</span></div>
                 <button id="retry-btn">もう一度プレイ</button>
             </div>
@@ -133,31 +148,64 @@
     // CONFIGURATION
     // ========================================
     const CONFIG = {
-        // Performance limits
+        // Performance limits (CRITICAL)
         MAX_RENDERED_BALLS: 100,
         MAX_RENDERED_PARTICLES: 50,
-        MAX_GATES_IN_SCENE: 4,
+        MAX_GATES_IN_SCENE: 6,
 
         // Speed settings
         SPEED: {
-            INITIAL: 0.12,
-            ACCELERATION: 0.00005,
-            MAX: 0.20
+            INITIAL: 0.08,
+            ACCELERATION: 0.00003,
+            MAX: 0.15
         },
 
         // Game settings
-        GOAL_DISTANCE: 15,      // meters
-        GATE_INTERVAL: 1.5,     // meters between gates
+        GOAL_DISTANCE: 50,      // meters (longer for more gameplay)
+        GATE_INTERVAL: 5,       // meters between gate pairs
         LANE_WIDTH: 3,          // x position for left/right lanes
+        GATE_SPAWN_AHEAD: 25,   // spawn gates this far ahead
 
         // Ball settings
         BALL_RADIUS: 0.15,
-        BALL_SPACING: 0.8,
+        BALL_SPACING: 0.4,
+        FOLLOW_DELAY: 0.08,     // seconds delay for followers
 
         // Gate settings
         GATE_WIDTH: 3,
         GATE_HEIGHT: 3,
-        GATE_DEPTH: 0.5
+        GATE_DEPTH: 0.3
+    };
+
+    // Gate types by difficulty
+    const GATE_PATTERNS = {
+        easy: [
+            { left: { effect: '×1.5', good: true }, right: { effect: '×1.2', good: true } },
+            { left: { effect: '+20', good: true }, right: { effect: '×1.5', good: true } },
+            { left: { effect: '×2', good: true }, right: { effect: '+30', good: true } },
+        ],
+        medium: [
+            { left: { effect: '×2', good: true }, right: { effect: '+50', good: true } },
+            { left: { effect: '×1.5', good: true }, right: { effect: '-20', good: false } },
+            { left: { effect: '+100', good: true }, right: { effect: '×2', good: true } },
+            { left: { effect: '÷1.5', good: false }, right: { effect: '×2.5', good: true } },
+        ],
+        hard: [
+            { left: { effect: '×3', good: true }, right: { effect: '÷2', good: false } },
+            { left: { effect: '÷1.5', good: false }, right: { effect: '×2.5', good: true } },
+            { left: { effect: '-50', good: false }, right: { effect: '×2', good: true } },
+            { left: { effect: '×2', good: true }, right: { effect: '÷2', good: false } },
+        ],
+        extreme: [
+            { left: { effect: '×3', good: true }, right: { effect: '÷2', good: false } },
+            { left: { effect: '÷3', good: false }, right: { effect: '×4', good: true } },
+            { left: { effect: '-100', good: false }, right: { effect: '×3', good: true } },
+        ],
+        bonus: [
+            { left: { effect: '×2', good: true }, right: { effect: '×2', good: true } },
+            { left: { effect: '+100', good: true }, right: { effect: '×3', good: true } },
+            { left: { effect: '×2.5', good: true }, right: { effect: '+200', good: true } },
+        ]
     };
 
     // ========================================
@@ -169,7 +217,9 @@
         speed: CONFIG.SPEED.INITIAL,
         isPlaying: true,
         playerX: 0,
-        targetX: 0
+        targetX: 0,
+        nextGateDistance: 8,    // first gate at 8m
+        gateIndex: 0
     };
 
     // ========================================
@@ -178,16 +228,16 @@
     const container = document.getElementById('game-container');
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x1a1a2e);
-    scene.fog = new THREE.Fog(0x1a1a2e, 5, 30);
+    scene.fog = new THREE.Fog(0x1a1a2e, 10, 40);
 
     // Camera
     const camera = new THREE.PerspectiveCamera(
-        75,
+        70,
         window.innerWidth / window.innerHeight,
         0.1,
         100
     );
-    camera.position.set(0, 3, -5);
+    camera.position.set(0, 4, -6);
     camera.lookAt(0, 0.5, 10);
 
     // Renderer
@@ -197,7 +247,7 @@
     container.insertBefore(renderer.domElement, container.firstChild);
 
     // Lighting
-    const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+    const ambientLight = new THREE.AmbientLight(0x404060, 0.6);
     scene.add(ambientLight);
 
     const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
@@ -207,53 +257,145 @@
     // ========================================
     // GROUND (Infinite runner track)
     // ========================================
-    const groundGeometry = new THREE.PlaneGeometry(12, 100);
+    const groundGeometry = new THREE.PlaneGeometry(14, 150);
     const groundMaterial = new THREE.MeshStandardMaterial({
         color: 0x2d2d44,
         roughness: 0.8
     });
     const ground = new THREE.Mesh(groundGeometry, groundMaterial);
     ground.rotation.x = -Math.PI / 2;
-    ground.position.z = 30;
+    ground.position.z = 50;
     scene.add(ground);
 
     // Lane markers
-    const lineGeometry = new THREE.PlaneGeometry(0.1, 100);
+    const lineGeometry = new THREE.PlaneGeometry(0.08, 150);
     const lineMaterial = new THREE.MeshBasicMaterial({ color: 0x4a4a6a });
 
     for (let x = -6; x <= 6; x += 3) {
         const line = new THREE.Mesh(lineGeometry, lineMaterial);
         line.rotation.x = -Math.PI / 2;
-        line.position.set(x, 0.01, 30);
+        line.position.set(x, 0.01, 50);
         scene.add(line);
     }
 
     // ========================================
-    // PLAYER BALL
+    // CROWD SYSTEM (Ball Management)
     // ========================================
-    const ballGeometry = new THREE.SphereGeometry(CONFIG.BALL_RADIUS, 16, 16);
+    const ballGeometry = new THREE.SphereGeometry(CONFIG.BALL_RADIUS, 12, 12);
     const ballMaterial = new THREE.MeshStandardMaterial({
         color: 0x4A90E2,
         emissive: 0x4A90E2,
         emissiveIntensity: 0.3,
-        roughness: 0.2,
-        metalness: 0.8
+        roughness: 0.3,
+        metalness: 0.7
     });
 
-    const playerBall = new THREE.Mesh(ballGeometry, ballMaterial);
-    playerBall.position.set(0, CONFIG.BALL_RADIUS, 0);
-    scene.add(playerBall);
+    // Object pool for balls
+    const ballPool = [];
+    const activeBalls = [];
 
-    // Ball point light
-    const ballLight = new THREE.PointLight(0x4A90E2, 0.5, 3);
-    playerBall.add(ballLight);
+    // Pre-create ball pool
+    for (let i = 0; i < CONFIG.MAX_RENDERED_BALLS; i++) {
+        const ball = new THREE.Mesh(ballGeometry, ballMaterial);
+        ball.visible = false;
+        scene.add(ball);
+        ballPool.push(ball);
+    }
+
+    // Leader ball (always visible)
+    const leaderBall = ballPool[0];
+    leaderBall.visible = true;
+    leaderBall.position.set(0, CONFIG.BALL_RADIUS, 0);
+    activeBalls.push({
+        mesh: leaderBall,
+        targetX: 0,
+        targetZ: 0,
+        isLeader: true
+    });
+
+    // Add point light to leader
+    const leaderLight = new THREE.PointLight(0x4A90E2, 0.8, 5);
+    leaderBall.add(leaderLight);
+
+    // Position history for follower delay
+    const positionHistory = [];
+    const HISTORY_LENGTH = 60; // frames of history
+
+    function updateCrowd() {
+        const displayCount = Math.min(Math.floor(gameState.score), CONFIG.MAX_RENDERED_BALLS);
+
+        // Store current leader position in history
+        positionHistory.unshift({ x: gameState.playerX, z: 0 });
+        if (positionHistory.length > HISTORY_LENGTH) {
+            positionHistory.pop();
+        }
+
+        // Calculate grid layout
+        const gridSize = Math.ceil(Math.sqrt(displayCount));
+        const spacing = CONFIG.BALL_SPACING;
+
+        // Update ball count
+        while (activeBalls.length < displayCount && activeBalls.length < ballPool.length) {
+            const ball = ballPool[activeBalls.length];
+            ball.visible = true;
+            activeBalls.push({
+                mesh: ball,
+                targetX: 0,
+                targetZ: 0,
+                isLeader: false,
+                index: activeBalls.length
+            });
+        }
+
+        // Hide excess balls
+        while (activeBalls.length > displayCount) {
+            const removed = activeBalls.pop();
+            removed.mesh.visible = false;
+        }
+
+        // Position balls in formation
+        for (let i = 1; i < activeBalls.length; i++) {
+            const ball = activeBalls[i];
+            const row = Math.floor((i - 1) / gridSize);
+            const col = (i - 1) % gridSize;
+
+            // Center the grid
+            const offsetX = (col - (gridSize - 1) / 2) * spacing;
+            const offsetZ = -row * spacing - spacing;
+
+            // Get delayed position from history
+            const historyIndex = Math.min(Math.floor(i * 2), positionHistory.length - 1);
+            const historyPos = positionHistory[historyIndex] || { x: gameState.playerX, z: 0 };
+
+            ball.targetX = historyPos.x + offsetX;
+            ball.targetZ = offsetZ;
+
+            // Smooth movement
+            ball.mesh.position.x += (ball.targetX - ball.mesh.position.x) * 0.1;
+            ball.mesh.position.z += (ball.targetZ - ball.mesh.position.z) * 0.1;
+            ball.mesh.position.y = CONFIG.BALL_RADIUS;
+        }
+
+        // Update leader position
+        leaderBall.position.x = gameState.playerX;
+        leaderBall.position.z = 0;
+    }
 
     // ========================================
-    // GATES
+    // GATE SYSTEM
     // ========================================
     const gates = [];
+    const gatePool = [];
 
-    function createGate(x, z, effect, isGood) {
+    // Pre-create gate pool
+    for (let i = 0; i < CONFIG.MAX_GATES_IN_SCENE * 2; i++) {
+        const gate = createGateObject();
+        gate.visible = false;
+        scene.add(gate);
+        gatePool.push(gate);
+    }
+
+    function createGateObject() {
         const group = new THREE.Group();
 
         // Gate frame
@@ -263,8 +405,8 @@
             CONFIG.GATE_DEPTH
         );
         const frameMaterial = new THREE.MeshStandardMaterial({
-            color: isGood ? 0x4A90E2 : 0xFF4444,
-            emissive: isGood ? 0x4A90E2 : 0xFF4444,
+            color: 0x4A90E2,
+            emissive: 0x4A90E2,
             emissiveIntensity: 0.3,
             transparent: true,
             opacity: 0.6,
@@ -274,7 +416,34 @@
         const frame = new THREE.Mesh(frameGeometry, frameMaterial);
         group.add(frame);
 
-        // Effect text (using sprite for simplicity)
+        // Text sprite placeholder
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true }));
+        sprite.scale.set(2, 1, 1);
+        sprite.position.z = CONFIG.GATE_DEPTH / 2 + 0.1;
+        group.add(sprite);
+
+        group.userData = {
+            frame: frame,
+            sprite: sprite,
+            effect: '',
+            isGood: true,
+            passed: false,
+            worldZ: 0
+        };
+
+        return group;
+    }
+
+    function setupGate(gate, x, worldZ, effect, isGood) {
+        gate.visible = true;
+        gate.position.set(x, CONFIG.GATE_HEIGHT / 2, worldZ - gameState.distance);
+
+        // Update material color
+        const color = isGood ? 0x4A90E2 : 0xFF4444;
+        gate.userData.frame.material.color.setHex(color);
+        gate.userData.frame.material.emissive.setHex(color);
+
+        // Update text
         const canvas = document.createElement('canvas');
         canvas.width = 256;
         canvas.height = 128;
@@ -286,31 +455,114 @@
         ctx.fillText(effect, 128, 64);
 
         const texture = new THREE.CanvasTexture(canvas);
-        const spriteMaterial = new THREE.SpriteMaterial({
-            map: texture,
-            transparent: true
-        });
-        const sprite = new THREE.Sprite(spriteMaterial);
-        sprite.scale.set(2, 1, 1);
-        sprite.position.z = CONFIG.GATE_DEPTH / 2 + 0.1;
-        group.add(sprite);
+        gate.userData.sprite.material.map = texture;
+        gate.userData.sprite.material.needsUpdate = true;
 
-        group.position.set(x, CONFIG.GATE_HEIGHT / 2, z);
-        group.userData = {
-            effect: effect,
-            isGood: isGood,
-            passed: false
-        };
+        gate.userData.effect = effect;
+        gate.userData.isGood = isGood;
+        gate.userData.passed = false;
+        gate.userData.worldZ = worldZ;
 
-        scene.add(group);
-        gates.push(group);
-
-        return group;
+        gates.push(gate);
     }
 
-    // Create initial gates (Step 1: fixed position)
-    createGate(-CONFIG.LANE_WIDTH, 8, '×2', true);
-    createGate(CONFIG.LANE_WIDTH, 8, '÷2', false);
+    function getAvailableGate() {
+        for (const gate of gatePool) {
+            if (!gate.visible) return gate;
+        }
+        return null;
+    }
+
+    function getDifficulty(distance) {
+        if (distance < 15) return 'easy';
+        if (distance < 25) return 'medium';
+        if (distance < 35) return 'hard';
+        if (distance < 45) return 'extreme';
+        return 'bonus';
+    }
+
+    function spawnGatePair(worldZ) {
+        const difficulty = getDifficulty(worldZ);
+        const patterns = GATE_PATTERNS[difficulty];
+        const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // Randomly swap left/right sometimes
+        const swap = Math.random() > 0.5;
+        const leftData = swap ? pattern.right : pattern.left;
+        const rightData = swap ? pattern.left : pattern.right;
+
+        const leftGate = getAvailableGate();
+        const rightGate = getAvailableGate();
+
+        if (leftGate && rightGate) {
+            setupGate(leftGate, -CONFIG.LANE_WIDTH, worldZ, leftData.effect, leftData.good);
+            setupGate(rightGate, CONFIG.LANE_WIDTH, worldZ, rightData.effect, rightData.good);
+        }
+    }
+
+    function updateGates() {
+        // Spawn new gates ahead
+        while (gameState.nextGateDistance < gameState.distance + CONFIG.GATE_SPAWN_AHEAD) {
+            spawnGatePair(gameState.nextGateDistance);
+            gameState.nextGateDistance += CONFIG.GATE_INTERVAL;
+        }
+
+        // Update gate positions and check collisions
+        for (let i = gates.length - 1; i >= 0; i--) {
+            const gate = gates[i];
+            gate.position.z = gate.userData.worldZ - gameState.distance;
+
+            // Check collision
+            if (!gate.userData.passed) {
+                const gateZ = gate.position.z;
+                if (gateZ < 1 && gateZ > -1) {
+                    const gateX = gate.position.x;
+                    const dist = Math.abs(gameState.playerX - gateX);
+
+                    if (dist < CONFIG.GATE_WIDTH / 2 + 0.5) {
+                        gate.userData.passed = true;
+                        applyGateEffect(gate.userData.effect, gate.userData.isGood);
+
+                        // Fade out gate
+                        gate.userData.frame.material.opacity = 0.2;
+                    }
+                }
+            }
+
+            // Remove gates that are behind the player
+            if (gate.position.z < -5) {
+                gate.visible = false;
+                gates.splice(i, 1);
+            }
+        }
+    }
+
+    function applyGateEffect(effect, isGood) {
+        const oldScore = gameState.score;
+
+        if (effect.startsWith('×')) {
+            const multiplier = parseFloat(effect.substring(1));
+            gameState.score *= multiplier;
+        } else if (effect.startsWith('÷')) {
+            const divisor = parseFloat(effect.substring(1));
+            gameState.score /= divisor;
+        } else if (effect.startsWith('+')) {
+            const add = parseFloat(effect.substring(1));
+            gameState.score += add;
+        } else if (effect.startsWith('-')) {
+            const sub = parseFloat(effect.substring(1));
+            gameState.score -= sub;
+        }
+
+        gameState.score = Math.max(1, Math.floor(gameState.score));
+
+        // UI feedback
+        const scoreEl = document.getElementById('score');
+        scoreEl.classList.add('pulse');
+        setTimeout(() => scoreEl.classList.remove('pulse'), 150);
+
+        console.log(`Gate: ${effect} | ${oldScore} → ${gameState.score}`);
+    }
 
     // ========================================
     // TOUCH/MOUSE CONTROLS
@@ -326,7 +578,7 @@
     function handleMove(clientX) {
         if (!isDragging || !gameState.isPlaying) return;
 
-        const deltaX = (clientX - touchStartX) * 0.02;
+        const deltaX = (clientX - touchStartX) * 0.025;
         gameState.targetX = Math.max(-5, Math.min(5, gameState.targetX + deltaX));
         touchStartX = clientX;
     }
@@ -359,6 +611,7 @@
     // ========================================
     const scoreEl = document.getElementById('score');
     const distanceEl = document.getElementById('distance');
+    const ballCountEl = document.getElementById('ball-count');
     const hintEl = document.getElementById('hint');
     const goalScreen = document.getElementById('goal-screen');
     const finalScoreEl = document.getElementById('final-score-value');
@@ -366,7 +619,15 @@
 
     function updateUI() {
         scoreEl.textContent = `×${Math.floor(gameState.score)}`;
-        distanceEl.textContent = `${gameState.distance.toFixed(1)}m`;
+        distanceEl.textContent = `${gameState.distance.toFixed(1)}m / ${CONFIG.GOAL_DISTANCE}m`;
+
+        const displayBalls = Math.min(Math.floor(gameState.score), CONFIG.MAX_RENDERED_BALLS);
+        const totalBalls = Math.floor(gameState.score);
+        if (totalBalls > CONFIG.MAX_RENDERED_BALLS) {
+            ballCountEl.textContent = `${displayBalls} balls (×${totalBalls})`;
+        } else {
+            ballCountEl.textContent = `${totalBalls} balls`;
+        }
     }
 
     // Hide hint after 3 seconds
@@ -385,7 +646,7 @@
             return;
         }
 
-        // Update speed (slight acceleration)
+        // Update speed (gradual acceleration)
         gameState.speed = Math.min(
             CONFIG.SPEED.MAX,
             gameState.speed + CONFIG.SPEED.ACCELERATION
@@ -395,66 +656,17 @@
         gameState.distance += gameState.speed;
 
         // Smooth player X movement
-        gameState.playerX += (gameState.targetX - gameState.playerX) * 0.15;
-        playerBall.position.x = gameState.playerX;
+        gameState.playerX += (gameState.targetX - gameState.playerX) * 0.12;
 
-        // Move camera and ground with player
-        camera.position.x = gameState.playerX * 0.3;
+        // Update camera to follow player slightly
+        camera.position.x = gameState.playerX * 0.25;
+        camera.lookAt(gameState.playerX * 0.1, 0.5, 10);
 
-        // Check gate collisions
-        gates.forEach(gate => {
-            if (gate.userData.passed) return;
+        // Update crowd
+        updateCrowd();
 
-            const ballZ = gameState.distance;
-            const gateZ = gate.position.z;
-
-            // Check if passed through gate
-            if (ballZ > gateZ - 0.5 && ballZ < gateZ + 0.5) {
-                const gateX = gate.position.x;
-                const distance = Math.abs(gameState.playerX - gateX);
-
-                if (distance < CONFIG.GATE_WIDTH / 2) {
-                    gate.userData.passed = true;
-
-                    // Apply effect
-                    const effect = gate.userData.effect;
-                    if (effect.startsWith('×')) {
-                        const multiplier = parseFloat(effect.substring(1));
-                        gameState.score *= multiplier;
-                    } else if (effect.startsWith('÷')) {
-                        const divisor = parseFloat(effect.substring(1));
-                        gameState.score /= divisor;
-                    } else if (effect.startsWith('+')) {
-                        const add = parseFloat(effect.substring(1));
-                        gameState.score += add;
-                    } else if (effect.startsWith('-')) {
-                        const sub = parseFloat(effect.substring(1));
-                        gameState.score -= sub;
-                    }
-
-                    gameState.score = Math.max(1, gameState.score);
-
-                    // Visual feedback (simple for Step 1)
-                    gate.visible = false;
-
-                    console.log(`Passed gate: ${effect}, Score: ${gameState.score}`);
-                }
-            }
-        });
-
-        // Update gate positions (move towards camera)
-        gates.forEach(gate => {
-            gate.position.z = gate.userData.originalZ !== undefined
-                ? gate.userData.originalZ - gameState.distance
-                : gate.position.z;
-        });
-
-        // Initialize original Z if not set
-        gates.forEach(gate => {
-            if (gate.userData.originalZ === undefined) {
-                gate.userData.originalZ = gate.position.z + gameState.distance;
-            }
-        });
+        // Update gates
+        updateGates();
 
         // Check goal
         if (gameState.distance >= CONFIG.GOAL_DISTANCE) {
@@ -485,18 +697,27 @@
             speed: CONFIG.SPEED.INITIAL,
             isPlaying: true,
             playerX: 0,
-            targetX: 0
+            targetX: 0,
+            nextGateDistance: 8,
+            gateIndex: 0
         };
 
-        // Reset player position
-        playerBall.position.x = 0;
+        // Clear position history
+        positionHistory.length = 0;
 
-        // Reset gates
+        // Reset all balls
+        for (let i = 1; i < activeBalls.length; i++) {
+            activeBalls[i].mesh.visible = false;
+        }
+        activeBalls.length = 1;
+        leaderBall.position.set(0, CONFIG.BALL_RADIUS, 0);
+
+        // Reset all gates
         gates.forEach(gate => {
-            gate.userData.passed = false;
-            gate.visible = true;
-            delete gate.userData.originalZ;
+            gate.visible = false;
+            gate.userData.frame.material.opacity = 0.6;
         });
+        gates.length = 0;
 
         // Hide goal screen
         goalScreen.style.display = 'none';
@@ -522,8 +743,8 @@
     // ========================================
     // START GAME
     // ========================================
-    console.log('🎮 Runner Game - Step 1 Prototype');
-    console.log('Controls: Swipe left/right or drag with mouse');
+    console.log('Runner Game - Step 2: Core Loop');
+    console.log('Features: Crowd system, dynamic gates, difficulty progression');
     gameLoop();
     </script>
 </body>
