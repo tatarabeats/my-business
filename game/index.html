@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Crowd Runner</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            touch-action: none;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: white;
+            font-size: 52px;
+            font-weight: bold;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            transition: transform 0.12s ease-out, color 0.1s;
+        }
+
+        #score.pulse-good {
+            transform: scale(1.4);
+            color: #50C878;
+        }
+
+        #score.pulse-bad {
+            transform: scale(0.9);
+            color: #FF4444;
+        }
+
+        #distance {
+            position: absolute;
+            top: 80px;
+            left: 20px;
+            color: rgba(255,255,255,0.9);
+            font-size: 22px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        #progress-bar {
+            position: absolute;
+            top: 110px;
+            left: 20px;
+            width: 150px;
+            height: 8px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4A90E2, #50C878);
+            width: 0%;
+            transition: width 0.1s;
+        }
+
+        #bonus-popup {
+            position: absolute;
+            top: 140px;
+            left: 20px;
+            color: #FFD700;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #bonus-popup.show {
+            opacity: 1;
+        }
+
+        #multiplier-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 72px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.8);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease-out;
+        }
+
+        #multiplier-popup.show {
+            opacity: 1;
+            transform: translate(-50%, -50%) scale(1.2);
+        }
+
+        #multiplier-popup.good { color: #50C878; }
+        #multiplier-popup.bad { color: #FF4444; }
+        #multiplier-popup.bonus { color: #FFD700; }
+
+        #hint {
+            position: absolute;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255,255,255,0.8);
+            font-size: 20px;
+            text-align: center;
+            transition: opacity 0.5s;
+        }
+
+        #screen-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        #screen-flash.good {
+            background: radial-gradient(ellipse at center, rgba(80, 200, 120, 0.4) 0%, transparent 70%);
+            opacity: 1;
+        }
+
+        #screen-flash.bad {
+            background: radial-gradient(ellipse at center, rgba(255, 68, 68, 0.5) 0%, transparent 70%);
+            opacity: 1;
+        }
+
+        #screen-flash.bonus {
+            background: radial-gradient(ellipse at center, rgba(255, 215, 0, 0.5) 0%, transparent 70%);
+            opacity: 1;
+        }
+
+        #goal-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #goal-screen h1 {
+            color: #FFD700;
+            font-size: 56px;
+            margin-bottom: 10px;
+            animation: goalPulse 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes goalPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+
+        #goal-screen .subtitle {
+            color: rgba(255,255,255,0.7);
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+
+        #goal-screen .final-score {
+            color: white;
+            font-size: 48px;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        #goal-screen .score-breakdown {
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            margin-bottom: 40px;
+        }
+
+        #retry-btn {
+            padding: 18px 70px;
+            font-size: 26px;
+            background: linear-gradient(135deg, #4A90E2, #357ABD);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 6px 20px rgba(74, 144, 226, 0.4);
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        #retry-btn:active {
+            transform: scale(0.95);
+        }
+
+        #start-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: auto;
+        }
+
+        #start-screen h1 {
+            color: white;
+            font-size: 42px;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 10px rgba(74, 144, 226, 0.5);
+        }
+
+        #start-screen .tagline {
+            color: rgba(255,255,255,0.6);
+            font-size: 16px;
+            margin-bottom: 50px;
+        }
+
+        #start-btn {
+            padding: 22px 80px;
+            font-size: 28px;
+            background: linear-gradient(135deg, #50C878, #3CB371);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(80, 200, 120, 0.4);
+            animation: startPulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes startPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        #start-btn:active {
+            transform: scale(0.95);
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="ui">
+            <div id="score">×10</div>
+            <div id="distance">0m</div>
+            <div id="progress-bar"><div id="progress-fill"></div></div>
+            <div id="bonus-popup">+20m ボーナス!</div>
+            <div id="multiplier-popup"></div>
+            <div id="hint">← スワイプで移動 →</div>
+            <div id="screen-flash"></div>
+
+            <div id="start-screen">
+                <h1>CROWD RUNNER</h1>
+                <div class="tagline">左右のゲートを選んで進め!</div>
+                <button id="start-btn">START</button>
+            </div>
+
+            <div id="goal-screen">
+                <h1>GOAL!</h1>
+                <div class="subtitle">ゴールおめでとう!</div>
+                <div class="final-score">×<span id="final-score-value">0</span></div>
+                <div class="score-breakdown" id="score-breakdown">10 → 0 (0倍)</div>
+                <button id="retry-btn">もう一度</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <script>
+    // ========================================
+    // SOUND SYSTEM (Web Audio API)
+    // ========================================
+    let audioCtx = null;
+
+    function initAudio() {
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+    }
+
+    function playSound(type) {
+        if (!audioCtx) return;
+
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+
+        if (type === 'good') {
+            // 上昇音（ピロリン♪）
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(523, now); // C5
+            oscillator.frequency.setValueAtTime(659, now + 0.08); // E5
+            oscillator.frequency.setValueAtTime(784, now + 0.16); // G5
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialDecayTo(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+        } else if (type === 'bad') {
+            // 下降音（ブー）
+            oscillator.type = 'sawtooth';
+            oscillator.frequency.setValueAtTime(200, now);
+            oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.2);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            oscillator.start(now);
+            oscillator.stop(now + 0.25);
+        } else if (type === 'bonus') {
+            // ファンファーレ
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(523, now);
+            oscillator.frequency.setValueAtTime(659, now + 0.1);
+            oscillator.frequency.setValueAtTime(784, now + 0.2);
+            oscillator.frequency.setValueAtTime(1047, now + 0.3);
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.5);
+            oscillator.start(now);
+            oscillator.stop(now + 0.5);
+        }
+    }
+
+    // Fix for exponentialDecayTo (not a real function)
+    GainNode.prototype.exponentialDecayTo = function(value, endTime) {
+        this.gain.exponentialRampToValueAtTime(Math.max(value, 0.0001), endTime);
+    };
+
+    // ========================================
+    // CONFIGURATION
+    // ========================================
+    const CONFIG = {
+        MAX_RENDERED_BALLS: 100,
+        MAX_PARTICLES: 50,
+        MAX_GATES_IN_SCENE: 10,
+
+        SPEED: {
+            INITIAL: 0.06,
+            ACCELERATION: 0.00002,
+            MAX: 0.12
+        },
+
+        GOAL_DISTANCE: 120,
+        GATE_INTERVAL: 10,        // ゲート間隔を広げた
+        LANE_WIDTH: 2.5,          // レーン幅を狭めて両方見やすく
+        GATE_SPAWN_AHEAD: 25,
+
+        BALL_RADIUS: 0.18,
+        BALL_SPACING: 0.45,
+
+        GATE_WIDTH: 2.8,          // ゲート幅を少し狭く
+        GATE_HEIGHT: 3.5,
+        GATE_DEPTH: 0.25,
+
+        CAMERA_SHAKE_DECAY: 0.92,
+        PARTICLE_LIFETIME: 45,
+
+        // ボーナスシステム
+        BONUS_DISTANCE: 20,       // 良いゲート連続で追加される距離
+        COMBO_FOR_BONUS: 3        // 3連続良いゲートでボーナス
+    };
+
+    // ゲートパターン（必ず左右両方に異なる選択肢）
+    const GATE_PATTERNS = {
+        easy: [
+            { left: { effect: '×1.5', good: true }, right: { effect: '×1.3', good: true } },
+            { left: { effect: '+20', good: true }, right: { effect: '×1.5', good: true } },
+            { left: { effect: '×2', good: true }, right: { effect: '+30', good: true } },
+            { left: { effect: '×1.8', good: true }, right: { effect: '+25', good: true } },
+        ],
+        medium: [
+            { left: { effect: '×2', good: true }, right: { effect: '-20', good: false } },
+            { left: { effect: '-15', good: false }, right: { effect: '×2.5', good: true } },
+            { left: { effect: '×1.5', good: true }, right: { effect: '÷1.3', good: false } },
+            { left: { effect: '÷1.5', good: false }, right: { effect: '×2', good: true } },
+        ],
+        hard: [
+            { left: { effect: '×3', good: true }, right: { effect: '÷2', good: false } },
+            { left: { effect: '÷1.5', good: false }, right: { effect: '×2.5', good: true } },
+            { left: { effect: '-50', good: false }, right: { effect: '×2', good: true } },
+            { left: { effect: '×2', good: true }, right: { effect: '÷2', good: false } },
+        ],
+        extreme: [
+            { left: { effect: '÷2', good: false }, right: { effect: '÷1.5', good: false } },  // 両方悪い選択
+            { left: { effect: '×4', good: true }, right: { effect: '÷3', good: false } },
+            { left: { effect: '-100', good: false }, right: { effect: '÷2', good: false } },  // 両方悪い
+            { left: { effect: '×3', good: true }, right: { effect: '-80', good: false } },
+        ],
+        bonus: [
+            { left: { effect: '×2', good: true }, right: { effect: '×2.5', good: true } },
+            { left: { effect: '+100', good: true }, right: { effect: '×3', good: true } },
+            { left: { effect: '×3', good: true }, right: { effect: '+150', good: true } },
+        ]
+    };
+
+    // ========================================
+    // GAME STATE
+    // ========================================
+    let gameState = {
+        score: 10,
+        startScore: 10,
+        distance: 0,
+        goalDistance: CONFIG.GOAL_DISTANCE,
+        speed: CONFIG.SPEED.INITIAL,
+        isPlaying: false,
+        hasStarted: false,
+        playerX: 0,
+        targetX: 0,
+        nextGateDistance: 8,
+        cameraShake: { x: 0, y: 0, intensity: 0 },
+        lastGateEffect: '',
+        goodCombo: 0
+    };
+
+    // ========================================
+    // THREE.JS SETUP
+    // ========================================
+    const container = document.getElementById('game-container');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x1a1a2e);
+    scene.fog = new THREE.Fog(0x1a1a2e, 8, 40);
+
+    const camera = new THREE.PerspectiveCamera(
+        75,  // 視野角を広げて両方のゲートが見やすく
+        window.innerWidth / window.innerHeight,
+        0.1,
+        100
+    );
+    camera.position.set(0, 5, -8);
+    camera.lookAt(0, 0.5, 10);
+
+    const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        powerPreference: "high-performance"
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.insertBefore(renderer.domElement, container.firstChild);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x404060, 0.7);
+    scene.add(ambientLight);
+
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    directionalLight.position.set(5, 15, -5);
+    scene.add(directionalLight);
+
+    const rimLight = new THREE.DirectionalLight(0x4A90E2, 0.3);
+    rimLight.position.set(-5, 5, 10);
+    scene.add(rimLight);
+
+    // ========================================
+    // GROUND
+    // ========================================
+    const groundGeometry = new THREE.PlaneGeometry(16, 250);
+    const groundMaterial = new THREE.MeshStandardMaterial({
+        color: 0x252540,
+        roughness: 0.85
+    });
+    const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+    ground.rotation.x = -Math.PI / 2;
+    ground.position.z = 100;
+    scene.add(ground);
+
+    // センターライン（プレイヤーの位置をわかりやすく）
+    const centerLineGeo = new THREE.PlaneGeometry(0.1, 250);
+    const centerLineMat = new THREE.MeshBasicMaterial({ color: 0x555577, transparent: true, opacity: 0.8 });
+    const centerLine = new THREE.Mesh(centerLineGeo, centerLineMat);
+    centerLine.rotation.x = -Math.PI / 2;
+    centerLine.position.set(0, 0.02, 100);
+    scene.add(centerLine);
+
+    // レーンマーカー
+    const dividerGeometry = new THREE.PlaneGeometry(0.06, 250);
+    const dividerMaterial = new THREE.MeshBasicMaterial({
+        color: 0x3a3a5a,
+        transparent: true,
+        opacity: 0.6
+    });
+
+    for (let x = -6; x <= 6; x += 2) {
+        const divider = new THREE.Mesh(dividerGeometry, dividerMaterial);
+        divider.rotation.x = -Math.PI / 2;
+        divider.position.set(x, 0.02, 100);
+        scene.add(divider);
+    }
+
+    // ========================================
+    // INSTANCED MESH FOR BALLS
+    // ========================================
+    const ballGeometry = new THREE.SphereGeometry(CONFIG.BALL_RADIUS, 14, 14);
+    const ballMaterial = new THREE.MeshStandardMaterial({
+        color: 0x4A90E2,
+        emissive: 0x2A60A2,
+        emissiveIntensity: 0.4,
+        roughness: 0.25,
+        metalness: 0.75
+    });
+
+    const instancedBalls = new THREE.InstancedMesh(
+        ballGeometry,
+        ballMaterial,
+        CONFIG.MAX_RENDERED_BALLS
+    );
+    instancedBalls.count = 1;
+    scene.add(instancedBalls);
+
+    const tempMatrix = new THREE.Matrix4();
+    const tempPosition = new THREE.Vector3();
+
+    const leaderLight = new THREE.PointLight(0x4A90E2, 1, 6);
+    leaderLight.position.set(0, CONFIG.BALL_RADIUS, 0);
+    scene.add(leaderLight);
+
+    const positionHistory = [];
+    const HISTORY_LENGTH = 80;
+
+    function updateCrowd() {
+        const displayCount = Math.min(Math.floor(gameState.score), CONFIG.MAX_RENDERED_BALLS);
+        instancedBalls.count = displayCount;
+
+        positionHistory.unshift({ x: gameState.playerX });
+        if (positionHistory.length > HISTORY_LENGTH) positionHistory.pop();
+
+        const gridSize = Math.ceil(Math.sqrt(displayCount));
+        const spacing = CONFIG.BALL_SPACING;
+
+        for (let i = 0; i < displayCount; i++) {
+            if (i === 0) {
+                tempPosition.set(gameState.playerX, CONFIG.BALL_RADIUS, 0);
+            } else {
+                const row = Math.floor((i - 1) / gridSize);
+                const col = (i - 1) % gridSize;
+                const offsetX = (col - (gridSize - 1) / 2) * spacing;
+                const offsetZ = -row * spacing - spacing;
+
+                const historyIndex = Math.min(Math.floor(i * 1.5), positionHistory.length - 1);
+                const historyPos = positionHistory[historyIndex] || { x: gameState.playerX };
+
+                tempPosition.set(
+                    historyPos.x + offsetX,
+                    CONFIG.BALL_RADIUS,
+                    offsetZ
+                );
+            }
+
+            tempMatrix.setPosition(tempPosition);
+            instancedBalls.setMatrixAt(i, tempMatrix);
+        }
+
+        instancedBalls.instanceMatrix.needsUpdate = true;
+        leaderLight.position.x = gameState.playerX;
+    }
+
+    // ========================================
+    // PARTICLE SYSTEM
+    // ========================================
+    const particles = [];
+    const particleGeometry = new THREE.SphereGeometry(0.08, 6, 6);
+
+    for (let i = 0; i < CONFIG.MAX_PARTICLES; i++) {
+        const particle = new THREE.Mesh(
+            particleGeometry,
+            new THREE.MeshBasicMaterial({ color: 0x50C878, transparent: true })
+        );
+        particle.visible = false;
+        particle.userData = { vx: 0, vy: 0, vz: 0, life: 0 };
+        scene.add(particle);
+        particles.push(particle);
+    }
+
+    function spawnParticles(x, y, z, color, count = 15) {
+        let spawned = 0;
+        for (const particle of particles) {
+            if (!particle.visible && spawned < count) {
+                particle.visible = true;
+                particle.position.set(x, y, z);
+                particle.material.color.setHex(color);
+                particle.material.opacity = 1;
+
+                const angle = Math.random() * Math.PI * 2;
+                const speed = 0.1 + Math.random() * 0.15;
+                particle.userData.vx = Math.cos(angle) * speed;
+                particle.userData.vy = 0.08 + Math.random() * 0.12;
+                particle.userData.vz = Math.sin(angle) * speed * 0.5;
+                particle.userData.life = CONFIG.PARTICLE_LIFETIME;
+
+                spawned++;
+            }
+        }
+    }
+
+    function updateParticles() {
+        for (const particle of particles) {
+            if (particle.visible) {
+                particle.position.x += particle.userData.vx;
+                particle.position.y += particle.userData.vy;
+                particle.position.z += particle.userData.vz;
+
+                particle.userData.vy -= 0.008;
+                particle.userData.vx *= 0.96;
+                particle.userData.vz *= 0.96;
+                particle.userData.life--;
+
+                particle.material.opacity = particle.userData.life / CONFIG.PARTICLE_LIFETIME;
+
+                if (particle.userData.life <= 0) {
+                    particle.visible = false;
+                }
+            }
+        }
+    }
+
+    // ========================================
+    // GATE SYSTEM
+    // ========================================
+    const gates = [];
+    const gatePool = [];
+
+    for (let i = 0; i < CONFIG.MAX_GATES_IN_SCENE * 2; i++) {
+        const gate = createGateObject();
+        gate.visible = false;
+        scene.add(gate);
+        gatePool.push(gate);
+    }
+
+    function createGateObject() {
+        const group = new THREE.Group();
+
+        const frameGeometry = new THREE.BoxGeometry(
+            CONFIG.GATE_WIDTH,
+            CONFIG.GATE_HEIGHT,
+            CONFIG.GATE_DEPTH
+        );
+        const frameMaterial = new THREE.MeshStandardMaterial({
+            color: 0x4A90E2,
+            emissive: 0x4A90E2,
+            emissiveIntensity: 0.5,
+            transparent: true,
+            opacity: 0.7,
+            roughness: 0.2
+        });
+
+        const frame = new THREE.Mesh(frameGeometry, frameMaterial);
+        group.add(frame);
+
+        const glowGeometry = new THREE.PlaneGeometry(CONFIG.GATE_WIDTH * 0.9, CONFIG.GATE_HEIGHT * 0.9);
+        const glowMaterial = new THREE.MeshBasicMaterial({
+            color: 0x4A90E2,
+            transparent: true,
+            opacity: 0.3,
+            side: THREE.DoubleSide
+        });
+        const glow = new THREE.Mesh(glowGeometry, glowMaterial);
+        glow.position.z = 0.01;
+        group.add(glow);
+
+        const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true }));
+        sprite.scale.set(2.2, 1.1, 1);
+        sprite.position.z = CONFIG.GATE_DEPTH / 2 + 0.15;
+        group.add(sprite);
+
+        group.userData = {
+            frame: frame,
+            glow: glow,
+            sprite: sprite,
+            effect: '',
+            isGood: true,
+            passed: false,
+            worldZ: 0,
+            pulsePhase: Math.random() * Math.PI * 2
+        };
+
+        return group;
+    }
+
+    function setupGate(gate, x, worldZ, effect, isGood) {
+        gate.visible = true;
+        gate.position.set(x, CONFIG.GATE_HEIGHT / 2, worldZ - gameState.distance);
+
+        const color = isGood ? 0x4A90E2 : 0xFF4444;
+        const emissiveColor = isGood ? 0x2A60A2 : 0xAA2222;
+
+        gate.userData.frame.material.color.setHex(color);
+        gate.userData.frame.material.emissive.setHex(emissiveColor);
+        gate.userData.frame.material.opacity = 0.7;
+        gate.userData.glow.material.color.setHex(color);
+        gate.userData.glow.material.opacity = 0.3;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = 256;
+        canvas.height = 128;
+        const ctx = canvas.getContext('2d');
+
+        const gradient = ctx.createRadialGradient(128, 64, 0, 128, 64, 100);
+        gradient.addColorStop(0, isGood ? 'rgba(80, 200, 120, 0.3)' : 'rgba(255, 68, 68, 0.3)');
+        gradient.addColorStop(1, 'transparent');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 256, 128);
+
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 72px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.shadowColor = isGood ? '#50C878' : '#FF4444';
+        ctx.shadowBlur = 15;
+        ctx.fillText(effect, 128, 64);
+
+        const texture = new THREE.CanvasTexture(canvas);
+        gate.userData.sprite.material.map = texture;
+        gate.userData.sprite.material.needsUpdate = true;
+
+        gate.userData.effect = effect;
+        gate.userData.isGood = isGood;
+        gate.userData.passed = false;
+        gate.userData.worldZ = worldZ;
+
+        gates.push(gate);
+    }
+
+    function getAvailableGate() {
+        for (const gate of gatePool) {
+            if (!gate.visible) return gate;
+        }
+        return null;
+    }
+
+    function getDifficulty(distance) {
+        const progress = distance / gameState.goalDistance;
+        if (progress < 0.2) return 'easy';
+        if (progress < 0.4) return 'medium';
+        if (progress < 0.65) return 'hard';
+        if (progress < 0.85) return 'extreme';
+        return 'bonus';
+    }
+
+    function spawnGatePair(worldZ) {
+        const difficulty = getDifficulty(worldZ);
+        const patterns = GATE_PATTERNS[difficulty];
+        const pattern = patterns[Math.floor(Math.random() * patterns.length)];
+
+        // 50%の確率で左右を入れ替え
+        const swap = Math.random() > 0.5;
+        const leftData = swap ? pattern.right : pattern.left;
+        const rightData = swap ? pattern.left : pattern.right;
+
+        const leftGate = getAvailableGate();
+        const rightGate = getAvailableGate();
+
+        if (leftGate && rightGate) {
+            setupGate(leftGate, -CONFIG.LANE_WIDTH, worldZ, leftData.effect, leftData.good);
+            setupGate(rightGate, CONFIG.LANE_WIDTH, worldZ, rightData.effect, rightData.good);
+        }
+    }
+
+    function updateGates() {
+        while (gameState.nextGateDistance < gameState.distance + CONFIG.GATE_SPAWN_AHEAD) {
+            spawnGatePair(gameState.nextGateDistance);
+            gameState.nextGateDistance += CONFIG.GATE_INTERVAL;
+        }
+
+        const time = Date.now() * 0.003;
+
+        for (let i = gates.length - 1; i >= 0; i--) {
+            const gate = gates[i];
+            gate.position.z = gate.userData.worldZ - gameState.distance;
+
+            if (!gate.userData.passed) {
+                const pulse = Math.sin(time + gate.userData.pulsePhase) * 0.1 + 1;
+                gate.scale.set(1, pulse, 1);
+            }
+
+            if (!gate.userData.passed) {
+                const gateZ = gate.position.z;
+                if (gateZ < 1.5 && gateZ > -0.5) {
+                    const gateX = gate.position.x;
+                    const dist = Math.abs(gameState.playerX - gateX);
+
+                    if (dist < CONFIG.GATE_WIDTH / 2 + 0.3) {
+                        gate.userData.passed = true;
+                        applyGateEffect(gate.userData.effect, gate.userData.isGood, gate.position);
+
+                        gate.userData.frame.material.opacity = 0.15;
+                        gate.userData.glow.material.opacity = 0;
+                        gate.scale.set(1, 1, 1);
+                    }
+                }
+            }
+
+            if (gate.position.z < -8) {
+                gate.visible = false;
+                gates.splice(i, 1);
+            }
+        }
+    }
+
+    // ========================================
+    // EFFECTS
+    // ========================================
+    function triggerCameraShake(intensity) {
+        gameState.cameraShake.intensity = intensity;
+    }
+
+    function updateCameraShake() {
+        if (gameState.cameraShake.intensity > 0.001) {
+            gameState.cameraShake.x = (Math.random() - 0.5) * gameState.cameraShake.intensity;
+            gameState.cameraShake.y = (Math.random() - 0.5) * gameState.cameraShake.intensity;
+            gameState.cameraShake.intensity *= CONFIG.CAMERA_SHAKE_DECAY;
+        } else {
+            gameState.cameraShake.x = 0;
+            gameState.cameraShake.y = 0;
+        }
+    }
+
+    function applyGateEffect(effect, isGood, position) {
+        const oldScore = gameState.score;
+
+        if (effect.startsWith('×')) {
+            gameState.score *= parseFloat(effect.substring(1));
+        } else if (effect.startsWith('÷')) {
+            gameState.score /= parseFloat(effect.substring(1));
+        } else if (effect.startsWith('+')) {
+            gameState.score += parseFloat(effect.substring(1));
+        } else if (effect.startsWith('-')) {
+            gameState.score -= parseFloat(effect.substring(1));
+        }
+
+        gameState.score = Math.max(1, Math.floor(gameState.score));
+        gameState.lastGateEffect = effect;
+
+        // コンボ処理
+        if (isGood) {
+            gameState.goodCombo++;
+            if (gameState.goodCombo >= CONFIG.COMBO_FOR_BONUS) {
+                // ボーナス！距離延長
+                gameState.goalDistance += CONFIG.BONUS_DISTANCE;
+                gameState.goodCombo = 0;
+                showBonusPopup();
+                playSound('bonus');
+                spawnParticles(position.x, position.y, position.z, 0xFFD700, 25);
+                triggerCameraShake(0.25);
+
+                const flash = document.getElementById('screen-flash');
+                flash.classList.add('bonus');
+                setTimeout(() => flash.classList.remove('bonus'), 200);
+                return;
+            }
+        } else {
+            gameState.goodCombo = 0;
+        }
+
+        // 通常のエフェクト
+        spawnParticles(position.x, position.y, position.z, isGood ? 0x50C878 : 0xFF4444, isGood ? 20 : 12);
+        triggerCameraShake(isGood ? 0.15 : 0.35);
+        playSound(isGood ? 'good' : 'bad');
+
+        // UI feedback
+        const scoreEl = document.getElementById('score');
+        const flash = document.getElementById('screen-flash');
+        const popup = document.getElementById('multiplier-popup');
+
+        scoreEl.classList.remove('pulse-good', 'pulse-bad');
+        void scoreEl.offsetWidth;
+        scoreEl.classList.add(isGood ? 'pulse-good' : 'pulse-bad');
+        setTimeout(() => scoreEl.classList.remove('pulse-good', 'pulse-bad'), 120);
+
+        flash.classList.remove('good', 'bad');
+        void flash.offsetWidth;
+        flash.classList.add(isGood ? 'good' : 'bad');
+        setTimeout(() => flash.classList.remove('good', 'bad'), 150);
+
+        popup.textContent = effect;
+        popup.classList.remove('show', 'good', 'bad', 'bonus');
+        void popup.offsetWidth;
+        popup.classList.add('show', isGood ? 'good' : 'bad');
+        setTimeout(() => popup.classList.remove('show'), 400);
+
+        console.log(`${effect} | ${oldScore} → ${gameState.score} | Combo: ${gameState.goodCombo}`);
+    }
+
+    function showBonusPopup() {
+        const bonusEl = document.getElementById('bonus-popup');
+        const popup = document.getElementById('multiplier-popup');
+
+        popup.textContent = '+' + CONFIG.BONUS_DISTANCE + 'm';
+        popup.classList.remove('show', 'good', 'bad', 'bonus');
+        void popup.offsetWidth;
+        popup.classList.add('show', 'bonus');
+        setTimeout(() => popup.classList.remove('show'), 600);
+
+        bonusEl.classList.add('show');
+        setTimeout(() => bonusEl.classList.remove('show'), 2000);
+    }
+
+    // ========================================
+    // CONTROLS - スワイプ方向を修正
+    // ========================================
+    let touchStartX = 0;
+    let isDragging = false;
+
+    function handleStart(clientX) {
+        touchStartX = clientX;
+        isDragging = true;
+        initAudio();  // 最初のタッチで音声を有効化
+    }
+
+    function handleMove(clientX) {
+        if (!isDragging || !gameState.isPlaying) return;
+
+        // 右スワイプ（clientX増加）→ 右に移動（targetX増加）
+        const deltaX = (clientX - touchStartX) * 0.025;
+        gameState.targetX = Math.max(-4, Math.min(4, gameState.targetX + deltaX));
+        touchStartX = clientX;
+    }
+
+    function handleEnd() {
+        isDragging = false;
+    }
+
+    renderer.domElement.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        handleStart(e.touches[0].clientX);
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        handleMove(e.touches[0].clientX);
+    }, { passive: false });
+
+    renderer.domElement.addEventListener('touchend', handleEnd);
+    renderer.domElement.addEventListener('mousedown', (e) => handleStart(e.clientX));
+    renderer.domElement.addEventListener('mousemove', (e) => handleMove(e.clientX));
+    renderer.domElement.addEventListener('mouseup', handleEnd);
+    renderer.domElement.addEventListener('mouseleave', handleEnd);
+
+    // ========================================
+    // UI
+    // ========================================
+    const scoreEl = document.getElementById('score');
+    const distanceEl = document.getElementById('distance');
+    const progressFill = document.getElementById('progress-fill');
+    const hintEl = document.getElementById('hint');
+    const startScreen = document.getElementById('start-screen');
+    const goalScreen = document.getElementById('goal-screen');
+    const finalScoreEl = document.getElementById('final-score-value');
+    const scoreBreakdown = document.getElementById('score-breakdown');
+    const startBtn = document.getElementById('start-btn');
+    const retryBtn = document.getElementById('retry-btn');
+
+    function updateUI() {
+        scoreEl.textContent = `×${Math.floor(gameState.score)}`;
+        distanceEl.textContent = `${Math.floor(gameState.distance)}m / ${Math.floor(gameState.goalDistance)}m`;
+        progressFill.style.width = `${Math.min(100, (gameState.distance / gameState.goalDistance) * 100)}%`;
+    }
+
+    // ========================================
+    // GAME LOOP
+    // ========================================
+    function gameLoop() {
+        requestAnimationFrame(gameLoop);
+
+        if (!gameState.isPlaying) {
+            renderer.render(scene, camera);
+            return;
+        }
+
+        gameState.speed = Math.min(
+            CONFIG.SPEED.MAX,
+            gameState.speed + CONFIG.SPEED.ACCELERATION
+        );
+        gameState.distance += gameState.speed;
+
+        gameState.playerX += (gameState.targetX - gameState.playerX) * 0.14;
+
+        updateCameraShake();
+        camera.position.x = gameState.playerX * 0.15 + gameState.cameraShake.x;
+        camera.position.y = 5 + gameState.cameraShake.y;
+        camera.lookAt(gameState.playerX * 0.05, 0.5, 10);
+
+        updateCrowd();
+        updateGates();
+        updateParticles();
+
+        if (gameState.distance >= gameState.goalDistance) {
+            showGoal();
+        }
+
+        updateUI();
+        renderer.render(scene, camera);
+    }
+
+    // ========================================
+    // GAME STATES
+    // ========================================
+    function startGame() {
+        gameState = {
+            score: 10,
+            startScore: 10,
+            distance: 0,
+            goalDistance: CONFIG.GOAL_DISTANCE,
+            speed: CONFIG.SPEED.INITIAL,
+            isPlaying: true,
+            hasStarted: true,
+            playerX: 0,
+            targetX: 0,
+            nextGateDistance: 8,
+            cameraShake: { x: 0, y: 0, intensity: 0 },
+            lastGateEffect: '',
+            goodCombo: 0
+        };
+
+        positionHistory.length = 0;
+        instancedBalls.count = 10;
+
+        gates.forEach(g => g.visible = false);
+        gates.length = 0;
+
+        particles.forEach(p => p.visible = false);
+
+        startScreen.style.display = 'none';
+        goalScreen.style.display = 'none';
+
+        hintEl.style.opacity = '1';
+        setTimeout(() => hintEl.style.opacity = '0', 2500);
+
+        initAudio();
+    }
+
+    function showGoal() {
+        gameState.isPlaying = false;
+        const finalScore = Math.floor(gameState.score);
+        const multiplier = (finalScore / gameState.startScore).toFixed(1);
+
+        finalScoreEl.textContent = finalScore;
+        scoreBreakdown.textContent = `${gameState.startScore} → ${finalScore} (${multiplier}倍)`;
+        goalScreen.style.display = 'flex';
+
+        playSound('bonus');
+
+        for (let i = 0; i < 5; i++) {
+            setTimeout(() => {
+                spawnParticles(
+                    (Math.random() - 0.5) * 6,
+                    2,
+                    (Math.random() - 0.5) * 3,
+                    0xFFD700,
+                    20
+                );
+            }, i * 150);
+        }
+    }
+
+    startBtn.addEventListener('click', startGame);
+    retryBtn.addEventListener('click', startGame);
+
+    // ========================================
+    // RESIZE
+    // ========================================
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    // ========================================
+    // START
+    // ========================================
+    console.log('Crowd Runner - v2.0');
+    console.log('Features: Sound, Distance Bonus, Combo System');
+    gameLoop();
+    </script>
+</body>
+</html>
