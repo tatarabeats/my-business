@@ -306,8 +306,8 @@
         },
 
         // Game settings
-        GOAL_DISTANCE: 40,
-        GATE_INTERVAL: 4,
+        GOAL_DISTANCE: 120,
+        GATE_INTERVAL: 8,
         LANE_WIDTH: 3,
         GATE_SPAWN_AHEAD: 20,
 
@@ -847,8 +847,8 @@
 
     function handleMove(clientX) {
         if (!isDragging || !gameState.isPlaying) return;
-        const deltaX = (clientX - touchStartX) * 0.03;
-        gameState.targetX = Math.max(-4.5, Math.min(4.5, gameState.targetX + deltaX));
+        const deltaX = (clientX - touchStartX) * -0.03;  // 符号反転：スワイプ方向に移動
+        gameState.targetX = Math.max(-4.5, Math.min(4.5, gameState.targetX - deltaX));
         touchStartX = clientX;
     }
 
