@@ -24,6 +24,11 @@
     </div>
 
     <script>
+        // ========================================
+        // GAME VERSION - 必ず画面に表示される
+        // ========================================
+        const VERSION = 'v0.2';
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -629,6 +634,14 @@
             // Controls hint
             ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'right';
             ctx.fillText('WASD / Arrow Keys で移動 | 攻撃は自動', GAME_WIDTH - 20, GAME_HEIGHT - 20);
+
+            // VERSION (左下に大きく表示)
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'left';
+            ctx.fillText(`🎮 Merge Survivor ${VERSION}`, 20, GAME_HEIGHT - 20);
+
+            // Audio status
+            ctx.fillStyle = audioCtx ? '#2ecc71' : '#e74c3c'; ctx.font = '12px Segoe UI';
+            ctx.fillText(audioCtx ? '🔊 Sound ON' : '🔇 Click to enable sound', 20, GAME_HEIGHT - 40);
         }
 
         function drawAbilitySlots() {
