@@ -14,7 +14,7 @@
 <body>
     <div id="game-container"><canvas id="gameCanvas"></canvas></div>
     <script>
-        const VERSION = 'v0.7';
+        const VERSION = 'v0.8';
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const GAME_WIDTH = 1024, GAME_HEIGHT = 768;
@@ -169,33 +169,35 @@
         let bossSpawned = false;
 
         // ===== MATERIALS - 6 TYPES =====
+        // value = effect per level, shown in UI
         let materials = [];
         const MATERIAL_TYPES = {
-            fire: { color: '#e74c3c', symbol: '🔥', name: '炎', desc: '攻撃力+20%', effectColor: '#ff3300' },
-            ice: { color: '#3498db', symbol: '❄️', name: '氷', desc: '敵を遅く', effectColor: '#00aaff' },
-            lightning: { color: '#f1c40f', symbol: '⚡', name: '雷', desc: '攻撃速度UP', effectColor: '#ffdd00' },
-            wind: { color: '#2ecc71', symbol: '💨', name: '風', desc: '移動速度UP', effectColor: '#44ff44' },
-            dark: { color: '#9b59b6', symbol: '💀', name: '闇', desc: 'HP吸収', effectColor: '#aa44ff' },
-            light: { color: '#ecf0f1', symbol: '✨', name: '光', desc: '攻撃範囲UP', effectColor: '#ffffff' }
+            fire: { color: '#e74c3c', symbol: '🔥', name: '炎', stat: '攻撃力', value: 20, unit: '%', effectColor: '#ff3300' },
+            ice: { color: '#3498db', symbol: '❄️', name: '氷', stat: 'スロー', value: 8, unit: '%', effectColor: '#00aaff' },
+            lightning: { color: '#f1c40f', symbol: '⚡', name: '雷', stat: '攻撃速度', value: 8, unit: '%', effectColor: '#ffdd00' },
+            wind: { color: '#2ecc71', symbol: '💨', name: '風', stat: '移動速度', value: 12, unit: '%', effectColor: '#44ff44' },
+            dark: { color: '#9b59b6', symbol: '💀', name: '闇', stat: 'HP吸収', value: 2, unit: '/撃', effectColor: '#aa44ff' },
+            light: { color: '#ecf0f1', symbol: '✨', name: '光', stat: '射程', value: 20, unit: '', effectColor: '#ffffff' }
         };
 
         // ===== COMBOS - 15 RECIPES =====
+        // inherits: base materials at 50% each, bonus: unique combo effect
         const COMBOS = {
-            'dark+fire': { type: 'hellfire', symbol: '👹', name: '獄炎', desc: 'HP大吸収', effectColor: '#880000' },
-            'dark+ice': { type: 'curse', symbol: '☠️', name: '呪い', desc: '敵弱体化', effectColor: '#440066' },
-            'dark+light': { type: 'chaos', symbol: '🌀', name: '混沌', desc: '全能力UP', effectColor: '#ff00ff' },
-            'dark+lightning': { type: 'void', symbol: '🕳️', name: '虚無', desc: '即死確率', effectColor: '#220044' },
-            'dark+wind': { type: 'shadow', symbol: '👤', name: '影', desc: '回避UP', effectColor: '#333366' },
-            'fire+ice': { type: 'steam', symbol: '♨️', name: '蒸気', desc: '範囲+攻撃', effectColor: '#aaaaaa' },
-            'fire+light': { type: 'solar', symbol: '☀️', name: '太陽', desc: '灼熱ダメージ', effectColor: '#ffaa00' },
-            'fire+lightning': { type: 'explosion', symbol: '💥', name: '爆発', desc: '範囲ダメージ', effectColor: '#ff6600' },
-            'fire+wind': { type: 'firestorm', symbol: '🌪️', name: '炎嵐', desc: '攻撃力大UP', effectColor: '#ff4400' },
-            'ice+light': { type: 'prism', symbol: '💎', name: 'プリズム', desc: '貫通攻撃', effectColor: '#aaddff' },
-            'ice+lightning': { type: 'frostbolt', symbol: '🧊', name: '氷雷', desc: '攻速+スロー', effectColor: '#00ffff' },
-            'ice+wind': { type: 'blizzard', symbol: '🌨️', name: '吹雪', desc: '広範囲スロー', effectColor: '#88ccff' },
-            'light+lightning': { type: 'holy', symbol: '⚜️', name: '神聖', desc: 'ボス特効', effectColor: '#ffffaa' },
-            'light+wind': { type: 'spirit', symbol: '👻', name: '精霊', desc: 'XP増加', effectColor: '#aaffaa' },
-            'lightning+wind': { type: 'thunder', symbol: '⛈️', name: '雷鳴', desc: '攻速大UP', effectColor: '#ffff00' }
+            'dark+fire': { type: 'hellfire', symbol: '👹', name: '獄炎', inherits: ['dark','fire'], bonus: 'HP吸収2倍', bonusVal: 100, effectColor: '#880000' },
+            'dark+ice': { type: 'curse', symbol: '☠️', name: '呪い', inherits: ['dark','ice'], bonus: '敵ダメ-20%', bonusVal: 20, effectColor: '#440066' },
+            'dark+light': { type: 'chaos', symbol: '🌀', name: '混沌', inherits: ['dark','light'], bonus: '全効果+10%', bonusVal: 10, effectColor: '#ff00ff' },
+            'dark+lightning': { type: 'void', symbol: '🕳️', name: '虚無', inherits: ['dark','lightning'], bonus: '即死3%', bonusVal: 3, effectColor: '#220044' },
+            'dark+wind': { type: 'shadow', symbol: '👤', name: '影', inherits: ['dark','wind'], bonus: '回避8%', bonusVal: 8, effectColor: '#333366' },
+            'fire+ice': { type: 'steam', symbol: '♨️', name: '蒸気', inherits: ['fire','ice'], bonus: '射程+25', bonusVal: 25, effectColor: '#aaaaaa' },
+            'fire+light': { type: 'solar', symbol: '☀️', name: '太陽', inherits: ['fire','light'], bonus: '継続ダメ', bonusVal: 3, effectColor: '#ffaa00' },
+            'fire+lightning': { type: 'explosion', symbol: '💥', name: '爆発', inherits: ['fire','lightning'], bonus: '範囲ダメ35', bonusVal: 35, effectColor: '#ff6600' },
+            'fire+wind': { type: 'firestorm', symbol: '🌪️', name: '炎嵐', inherits: ['fire','wind'], bonus: '攻撃+30%', bonusVal: 30, effectColor: '#ff4400' },
+            'ice+light': { type: 'prism', symbol: '💎', name: 'プリズム', inherits: ['ice','light'], bonus: '貫通攻撃', bonusVal: 1, effectColor: '#aaddff' },
+            'ice+lightning': { type: 'frostbolt', symbol: '🧊', name: '氷雷', inherits: ['ice','lightning'], bonus: '攻速+スロー強化', bonusVal: 50, effectColor: '#00ffff' },
+            'ice+wind': { type: 'blizzard', symbol: '🌨️', name: '吹雪', inherits: ['ice','wind'], bonus: 'スロー範囲2倍', bonusVal: 100, effectColor: '#88ccff' },
+            'light+lightning': { type: 'holy', symbol: '⚜️', name: '神聖', inherits: ['light','lightning'], bonus: 'ボス+30%', bonusVal: 30, effectColor: '#ffffaa' },
+            'light+wind': { type: 'spirit', symbol: '👻', name: '精霊', inherits: ['light','wind'], bonus: 'XP+20%', bonusVal: 20, effectColor: '#aaffaa' },
+            'lightning+wind': { type: 'thunder', symbol: '⛈️', name: '雷鳴', inherits: ['lightning','wind'], bonus: '攻速+15%', bonusVal: 15, effectColor: '#ffff00' }
         };
 
         // ===== RECIPE STORAGE - FIXED =====
@@ -220,6 +222,8 @@
         let uiPos = { x: GAME_WIDTH - 310, y: 15 };
         let uiDragging = false, uiDragOffset = { x: 0, y: 0 };
         let dragState = { dragging: false, slotIndex: -1, currentX: 0, currentY: 0 };
+        let hoveredSlot = -1;
+        let mousePos = { x: 0, y: 0 };
 
         function addFloatingText(x, y, text, color, size = 16) {
             floatingTexts.push({ x, y, text, color, size, life: 1, startTime: Date.now() });
@@ -270,11 +274,22 @@
         canvas.addEventListener('mousemove', e => {
             const rect = canvas.getBoundingClientRect();
             const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+            mousePos = { x: mx, y: my };
             dragState.currentX = mx;
             dragState.currentY = my;
             if (uiDragging) {
                 uiPos.x = Math.max(0, Math.min(GAME_WIDTH - 280, mx - uiDragOffset.x));
                 uiPos.y = Math.max(0, Math.min(GAME_HEIGHT - 80, my - uiDragOffset.y));
+            }
+
+            // Track hovered slot for tooltip
+            hoveredSlot = -1;
+            for (let i = 0; i < player.weaponSlots; i++) {
+                const slot = getSlotRect(i);
+                if (mx >= slot.x && mx <= slot.x + slot.width && my >= slot.y && my <= slot.y + slot.height) {
+                    hoveredSlot = i;
+                    break;
+                }
             }
         });
 
@@ -347,14 +362,26 @@
                 const combo = COMBOS[recipeKey];
 
                 if (combo) {
-                    player.abilities[slot1] = { ...combo, level: 1, isCombo: true };
+                    // Store inherits for effect calculation
+                    player.abilities[slot1] = {
+                        ...combo,
+                        level: 1,
+                        isCombo: true,
+                        inherits: combo.inherits
+                    };
                     player.abilities[slot2] = null;
                     playSound('merge', 1.4, 0.12);
+
+                    // Show what effects are inherited
+                    const m1 = MATERIAL_TYPES[combo.inherits[0]];
+                    const m2 = MATERIAL_TYPES[combo.inherits[1]];
+                    const inheritText = `${m1.stat}+${m2.stat}の50%継承`;
 
                     if (!discoveredRecipes.includes(recipeKey)) {
                         discoveredRecipes.push(recipeKey);
                         saveRecipes();
                         addNotification(`📖 新発見！ ${combo.symbol} ${combo.name}`, '#f1c40f', 3500);
+                        addNotification(`└ ${inheritText} + ${combo.bonus}`, '#aaa', 3500);
                     } else {
                         addNotification(`✨ ${combo.symbol} ${combo.name}`, '#f1c40f');
                     }
@@ -459,14 +486,39 @@
         }
 
         // ===== ABILITY CALCULATIONS =====
-        function getAbilityPower(type) {
-            let total = 0;
+        // Current effect totals (for display)
+        let currentEffects = {
+            fire: 0, ice: 0, lightning: 0, wind: 0, dark: 0, light: 0,
+            bonuses: []
+        };
+
+        function calculateEffects() {
+            // Reset
+            currentEffects = { fire: 0, ice: 0, lightning: 0, wind: 0, dark: 0, light: 0, bonuses: [] };
+
             for (const a of player.abilities) {
                 if (!a) continue;
-                if (a.type === type) total += a.level || 1;
-                if (a.isCombo && a.type.includes(type.substring(0, 4))) total += (a.level || 1) * 0.5;
+                const level = a.level || 1;
+
+                if (a.isCombo) {
+                    // Combo: inherit 50% of each base material
+                    const comboKey = getRecipeKey(a.inherits[0], a.inherits[1]);
+                    const combo = COMBOS[comboKey] || Object.values(COMBOS).find(c => c.type === a.type);
+                    if (combo && combo.inherits) {
+                        for (const base of combo.inherits) {
+                            const mat = MATERIAL_TYPES[base];
+                            if (mat) currentEffects[base] += mat.value * level * 0.5;
+                        }
+                    }
+                    // Add unique bonus
+                    currentEffects.bonuses.push({ name: a.name, bonus: a.bonus, level });
+                } else {
+                    // Base material: full effect
+                    const mat = MATERIAL_TYPES[a.type];
+                    if (mat) currentEffects[a.type] += mat.value * level;
+                }
             }
-            return total;
+            return currentEffects;
         }
 
         function getTotalPower() {
@@ -486,6 +538,7 @@
         }
 
         function applyAbilityEffects() {
+            calculateEffects();
             const levelBonus = 1 + (player.level - 1) * 0.05;
 
             player.attack = player.baseAttack * levelBonus;
@@ -493,18 +546,38 @@
             player.attackSpeed = player.baseAttackSpeed;
             player.attackRange = 150;
 
-            const firePower = getAbilityPower('fire') + getAbilityPower('firestorm') * 1.5 + getAbilityPower('hellfire') + getAbilityPower('solar');
-            const windPower = getAbilityPower('wind') + getAbilityPower('thunder') * 0.5 + getAbilityPower('spirit');
-            const lightningPower = getAbilityPower('lightning') + getAbilityPower('frostbolt') + getAbilityPower('thunder') * 1.5;
-            const lightPower = getAbilityPower('light') + getAbilityPower('prism') + getAbilityPower('holy');
-            const steamPower = getAbilityPower('steam');
-            const chaosPower = getAbilityPower('chaos');
-
-            player.attack *= (1 + firePower * 0.2 + chaosPower * 0.1);
-            player.speed += windPower * 0.35 + chaosPower * 0.1;
-            player.attackSpeed *= (1 - lightningPower * 0.08 - chaosPower * 0.03);
+            // Apply base effects from currentEffects
+            player.attack *= (1 + currentEffects.fire / 100);
+            player.speed *= (1 + currentEffects.wind / 100);
+            player.attackSpeed *= (1 - currentEffects.lightning / 100);
             player.attackSpeed = Math.max(80, player.attackSpeed);
-            player.attackRange += lightPower * 20 + steamPower * 25;
+            player.attackRange += currentEffects.light;
+
+            // Apply combo bonuses
+            for (const b of currentEffects.bonuses) {
+                const lv = b.level;
+                if (b.name === '炎嵐') player.attack *= (1 + 0.30 * lv);
+                if (b.name === '雷鳴') player.attackSpeed *= (1 - 0.15 * lv);
+                if (b.name === '蒸気') player.attackRange += 25 * lv;
+                if (b.name === '混沌') {
+                    player.attack *= (1 + 0.10 * lv);
+                    player.speed *= (1 + 0.10 * lv);
+                    player.attackSpeed *= (1 - 0.03 * lv);
+                }
+            }
+            player.attackSpeed = Math.max(80, player.attackSpeed);
+        }
+
+        // Helper for getting specific power (used in combat)
+        function getAbilityPower(type) {
+            let total = 0;
+            for (const a of player.abilities) {
+                if (!a) continue;
+                const lv = a.level || 1;
+                if (a.type === type) total += lv;
+                if (a.isCombo && a.inherits && a.inherits.includes(type)) total += lv * 0.5;
+            }
+            return total;
         }
 
         // ===== LEVEL UP =====
@@ -1068,6 +1141,68 @@
             }
         }
 
+        function drawTooltip() {
+            if (hoveredSlot < 0 || dragState.dragging || game.showRecipes) return;
+            const ability = player.abilities[hoveredSlot];
+            if (!ability) return;
+
+            const level = ability.level || 1;
+            const lines = [];
+
+            // Title
+            lines.push({ text: `${ability.symbol} ${ability.name} Lv${level}`, color: ability.effectColor || '#fff', bold: true });
+
+            if (ability.isCombo && ability.inherits) {
+                // Combo: show inherited effects
+                for (const base of ability.inherits) {
+                    const mat = MATERIAL_TYPES[base];
+                    if (mat) {
+                        const val = (mat.value * level * 0.5).toFixed(0);
+                        lines.push({ text: `${mat.symbol} ${mat.stat} +${val}${mat.unit} (50%)`, color: '#aaa' });
+                    }
+                }
+                lines.push({ text: `⭐ ${ability.bonus}`, color: '#f1c40f' });
+            } else {
+                // Base material: show effect at current level
+                const mat = MATERIAL_TYPES[ability.type];
+                if (mat) {
+                    const val = mat.value * level;
+                    lines.push({ text: `${mat.stat} +${val}${mat.unit}`, color: '#aaa' });
+                    if (level < 5) {
+                        const nextVal = mat.value * (level + 1);
+                        lines.push({ text: `次Lv: +${nextVal}${mat.unit}`, color: '#666' });
+                    } else {
+                        lines.push({ text: '(最大レベル)', color: '#f1c40f' });
+                    }
+                }
+            }
+
+            // Draw tooltip box
+            const padding = 8;
+            const lineHeight = 16;
+            const width = 160;
+            const height = lines.length * lineHeight + padding * 2;
+
+            let tx = mousePos.x + 15;
+            let ty = mousePos.y + 15;
+            if (tx + width > GAME_WIDTH) tx = mousePos.x - width - 10;
+            if (ty + height > GAME_HEIGHT) ty = mousePos.y - height - 10;
+
+            ctx.fillStyle = 'rgba(15,15,30,0.95)';
+            ctx.fillRect(tx, ty, width, height);
+            ctx.strokeStyle = ability.effectColor || '#555';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(tx, ty, width, height);
+
+            ctx.textAlign = 'left';
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                ctx.fillStyle = line.color;
+                ctx.font = line.bold ? 'bold 11px Segoe UI' : '10px Segoe UI';
+                ctx.fillText(line.text, tx + padding, ty + padding + 10 + i * lineHeight);
+            }
+        }
+
         function drawRecipeBook() {
             if (!game.showRecipes) return;
 
@@ -1085,35 +1220,42 @@
             ctx.font = '12px Segoe UI';
             ctx.fillText(`発見: ${discoveredRecipes.length}/${Object.keys(COMBOS).length}`, GAME_WIDTH/2, 105);
 
-            // Materials
+            // Materials with level scaling
             ctx.fillStyle = '#3498db';
             ctx.font = 'bold 13px Segoe UI';
             ctx.textAlign = 'left';
-            ctx.fillText('【素材】', 80, 135);
+            ctx.fillText('【素材】Lv1→Lv2→Lv3→Lv4→Lv5', 80, 135);
 
-            let y = 155;
             const matKeys = Object.keys(MATERIAL_TYPES);
             for (let i = 0; i < matKeys.length; i++) {
                 const key = matKeys[i];
                 const mat = MATERIAL_TYPES[key];
                 const col = i < 3 ? 0 : 1;
-                const xPos = 90 + col * 300;
-                const yPos = 155 + (i % 3) * 22;
+                const xPos = 90 + col * 450;
+                const yPos = 158 + (i % 3) * 26;
 
                 ctx.font = '15px Arial';
                 ctx.fillStyle = mat.effectColor;
                 ctx.fillText(mat.symbol, xPos, yPos);
-                ctx.fillStyle = '#ccc';
-                ctx.font = '11px Segoe UI';
-                ctx.fillText(`${mat.name}: ${mat.desc}`, xPos + 25, yPos);
+
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 11px Segoe UI';
+                ctx.fillText(`${mat.name}`, xPos + 25, yPos);
+
+                // Show level scaling: Lv1 → Lv5
+                ctx.fillStyle = '#aaa';
+                ctx.font = '10px Segoe UI';
+                const v = mat.value;
+                const scaling = `${mat.stat}: +${v}${mat.unit} → +${v*2}${mat.unit} → +${v*3}${mat.unit} → +${v*4}${mat.unit} → +${v*5}${mat.unit}`;
+                ctx.fillText(scaling, xPos + 50, yPos);
             }
 
-            // Combos
-            y = 235;
+            // Combos with inheritance info
+            let y = 250;
             ctx.fillStyle = '#e74c3c';
             ctx.font = 'bold 13px Segoe UI';
-            ctx.fillText('【合成レシピ】', 80, y);
-            y += 22;
+            ctx.fillText('【合成レシピ】素材効果50%継承 + 固有ボーナス', 80, y);
+            y += 24;
 
             let col = 0;
             const comboKeys = Object.keys(COMBOS);
@@ -1123,33 +1265,68 @@
                 const discovered = discoveredRecipes.includes(key);
                 const [t1, t2] = key.split('+');
                 const m1 = MATERIAL_TYPES[t1], m2 = MATERIAL_TYPES[t2];
-                const xPos = 90 + col * 300;
+                const xPos = 90 + col * 450;
 
-                ctx.font = '14px Arial';
                 ctx.textAlign = 'left';
 
                 if (discovered) {
+                    // Recipe formula
+                    ctx.font = '14px Arial';
                     ctx.fillStyle = '#fff';
                     ctx.fillText(`${m1.symbol}+${m2.symbol}=${combo.symbol}`, xPos, y);
+
+                    // Name
                     ctx.fillStyle = combo.effectColor;
-                    ctx.font = '10px Segoe UI';
-                    ctx.fillText(`${combo.name}: ${combo.desc}`, xPos + 75, y);
+                    ctx.font = 'bold 11px Segoe UI';
+                    ctx.fillText(combo.name, xPos + 75, y);
+
+                    // Inherited effects + bonus
+                    ctx.fillStyle = '#888';
+                    ctx.font = '9px Segoe UI';
+                    const inheritDesc = `${m1.stat}+${m2.stat}の50% + ${combo.bonus}`;
+                    ctx.fillText(inheritDesc, xPos + 115, y);
                 } else {
+                    ctx.font = '14px Arial';
                     ctx.fillStyle = '#444';
                     ctx.fillText(`${m1.symbol}+${m2.symbol}= ???`, xPos, y);
                 }
 
-                y += 22;
-                if (y > GAME_HEIGHT - 130) {
-                    y = 257;
+                y += 26;
+                if (y > GAME_HEIGHT - 100) {
+                    y = 274;
                     col++;
                 }
+            }
+
+            // Current effects summary
+            ctx.fillStyle = '#2ecc71';
+            ctx.font = 'bold 11px Segoe UI';
+            ctx.textAlign = 'left';
+            ctx.fillText('【現在の効果】', GAME_WIDTH - 280, 135);
+
+            ctx.font = '10px Segoe UI';
+            ctx.fillStyle = '#aaa';
+            let ey = 155;
+            if (currentEffects.fire > 0) { ctx.fillText(`🔥攻撃力 +${currentEffects.fire.toFixed(0)}%`, GAME_WIDTH - 280, ey); ey += 16; }
+            if (currentEffects.ice > 0) { ctx.fillText(`❄️スロー +${currentEffects.ice.toFixed(0)}%`, GAME_WIDTH - 280, ey); ey += 16; }
+            if (currentEffects.lightning > 0) { ctx.fillText(`⚡攻撃速度 +${currentEffects.lightning.toFixed(0)}%`, GAME_WIDTH - 280, ey); ey += 16; }
+            if (currentEffects.wind > 0) { ctx.fillText(`💨移動速度 +${currentEffects.wind.toFixed(0)}%`, GAME_WIDTH - 280, ey); ey += 16; }
+            if (currentEffects.dark > 0) { ctx.fillText(`💀HP吸収 +${currentEffects.dark.toFixed(0)}/撃`, GAME_WIDTH - 280, ey); ey += 16; }
+            if (currentEffects.light > 0) { ctx.fillText(`✨射程 +${currentEffects.light.toFixed(0)}`, GAME_WIDTH - 280, ey); ey += 16; }
+            for (const b of currentEffects.bonuses) {
+                ctx.fillStyle = '#f1c40f';
+                ctx.fillText(`⭐${b.name} Lv${b.level}: ${b.bonus}`, GAME_WIDTH - 280, ey);
+                ey += 16;
+            }
+            if (ey === 155) {
+                ctx.fillStyle = '#555';
+                ctx.fillText('素材を集めよう！', GAME_WIDTH - 280, ey);
             }
 
             ctx.fillStyle = '#666';
             ctx.font = '12px Segoe UI';
             ctx.textAlign = 'center';
-            ctx.fillText('クリックで閉じる | 同じ素材でLvUP', GAME_WIDTH/2, GAME_HEIGHT - 70);
+            ctx.fillText('クリックで閉じる | 同じ素材でLvUP(最大5)', GAME_WIDTH/2, GAME_HEIGHT - 70);
         }
 
         // ===== GAME OVER =====
@@ -1266,6 +1443,7 @@
             drawParticles();
             drawFloatingTexts();
             drawUI();
+            drawTooltip();
             drawNotifications();
             drawRecipeBook();
             if (gameOverScreen) drawGameOver();
