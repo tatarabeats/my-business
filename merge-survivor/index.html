@@ -6,283 +6,181 @@
     <title>Merge Survivor</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #1a1a2e;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Segoe UI', sans-serif;
-        }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
         #game-container { position: relative; }
         canvas { border: 3px solid #4a4a6a; border-radius: 8px; }
     </style>
 </head>
 <body>
-    <div id="game-container">
-        <canvas id="gameCanvas"></canvas>
-    </div>
-
+    <div id="game-container"><canvas id="gameCanvas"></canvas></div>
     <script>
-        // ========================================
-        // GAME VERSION - 必ず画面に表示される
-        // ========================================
-        const VERSION = 'v0.2';
-
+        const VERSION = 'v0.3';
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
+        const GAME_WIDTH = 1024, GAME_HEIGHT = 768, WORLD_WIDTH = 2000, WORLD_HEIGHT = 2000;
+        canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
 
-        const GAME_WIDTH = 1024;
-        const GAME_HEIGHT = 768;
-        const WORLD_WIDTH = 2000;
-        const WORLD_HEIGHT = 2000;
-
-        canvas.width = GAME_WIDTH;
-        canvas.height = GAME_HEIGHT;
-
-        // ========================================
-        // Sound System (Web Audio API)
-        // ========================================
+        // Sound System
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
-
-        function initAudio() {
-            if (!audioCtx) {
-                audioCtx = new AudioCtx();
-            }
-        }
-
+        function initAudio() { if (!audioCtx) { audioCtx = new AudioCtx(); } }
         function playSound(type) {
             if (!audioCtx) return;
-
-            const oscillator = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-
-            oscillator.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
-
-            const now = audioCtx.currentTime;
-
-            switch(type) {
-                case 'shoot':
-                    oscillator.frequency.setValueAtTime(800, now);
-                    oscillator.frequency.exponentialRampToValueAtTime(400, now + 0.1);
-                    gainNode.gain.setValueAtTime(0.1, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                    oscillator.type = 'square';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.1);
-                    break;
-                case 'hit':
-                    oscillator.frequency.setValueAtTime(200, now);
-                    oscillator.frequency.exponentialRampToValueAtTime(100, now + 0.15);
-                    gainNode.gain.setValueAtTime(0.15, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-                    oscillator.type = 'sawtooth';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.15);
-                    break;
-                case 'collect':
-                    oscillator.frequency.setValueAtTime(523, now);
-                    oscillator.frequency.setValueAtTime(659, now + 0.1);
-                    oscillator.frequency.setValueAtTime(784, now + 0.2);
-                    gainNode.gain.setValueAtTime(0.1, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-                    oscillator.type = 'sine';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.3);
-                    break;
-                case 'damage':
-                    oscillator.frequency.setValueAtTime(150, now);
-                    oscillator.frequency.exponentialRampToValueAtTime(50, now + 0.2);
-                    gainNode.gain.setValueAtTime(0.2, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-                    oscillator.type = 'sawtooth';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.2);
-                    break;
-                case 'levelup':
-                    oscillator.frequency.setValueAtTime(400, now);
-                    oscillator.frequency.setValueAtTime(500, now + 0.1);
-                    oscillator.frequency.setValueAtTime(600, now + 0.2);
-                    oscillator.frequency.setValueAtTime(800, now + 0.3);
-                    gainNode.gain.setValueAtTime(0.1, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
-                    oscillator.type = 'sine';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.4);
-                    break;
-                case 'kill':
-                    oscillator.frequency.setValueAtTime(300, now);
-                    oscillator.frequency.exponentialRampToValueAtTime(150, now + 0.1);
-                    gainNode.gain.setValueAtTime(0.08, now);
-                    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-                    oscillator.type = 'triangle';
-                    oscillator.start(now);
-                    oscillator.stop(now + 0.1);
-                    break;
-            }
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            try {
+                const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                const now = audioCtx.currentTime;
+                gain.gain.setValueAtTime(0.1, now);
+                switch(type) {
+                    case 'shoot': osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(300, now + 0.08); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08); osc.type = 'square'; osc.start(now); osc.stop(now + 0.08); break;
+                    case 'hit': osc.frequency.setValueAtTime(200, now); osc.frequency.exponentialRampToValueAtTime(80, now + 0.1); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1); osc.type = 'sawtooth'; osc.start(now); osc.stop(now + 0.1); break;
+                    case 'collect': osc.frequency.setValueAtTime(523, now); osc.frequency.setValueAtTime(659, now + 0.08); osc.frequency.setValueAtTime(784, now + 0.16); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.24); osc.type = 'sine'; osc.start(now); osc.stop(now + 0.24); break;
+                    case 'damage': osc.frequency.setValueAtTime(120, now); osc.frequency.exponentialRampToValueAtTime(40, now + 0.15); gain.gain.setValueAtTime(0.15, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15); osc.type = 'sawtooth'; osc.start(now); osc.stop(now + 0.15); break;
+                    case 'merge': osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.1); osc.frequency.setValueAtTime(800, now + 0.2); osc.frequency.setValueAtTime(1000, now + 0.3); gain.gain.setValueAtTime(0.12, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4); osc.type = 'sine'; osc.start(now); osc.stop(now + 0.4); break;
+                    case 'kill': osc.frequency.setValueAtTime(250, now); osc.frequency.exponentialRampToValueAtTime(100, now + 0.08); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08); osc.type = 'triangle'; osc.start(now); osc.stop(now + 0.08); break;
+                }
+            } catch(e) {}
         }
-
-        // Initialize audio on first user interaction
         document.addEventListener('click', initAudio, { once: true });
         document.addEventListener('keydown', initAudio, { once: true });
 
-        // ========================================
         // Game State
-        // ========================================
-        const game = {
-            running: true,
-            score: 0,
-            time: 0,
-            wave: 1,
-            camera: { x: 0, y: 0 }
-        };
+        const game = { running: true, score: 0, time: 0, wave: 1, camera: { x: 0, y: 0 }, selectedSlot: -1, mergeMode: false };
 
-        // ========================================
-        // Player (EASIER - more HP, faster)
-        // ========================================
+        // Player - SLOWER base speed
         const player = {
-            x: WORLD_WIDTH / 2,
-            y: WORLD_HEIGHT / 2,
-            size: 32,
-            speed: 6,  // Increased from 5
-            hp: 150,   // Increased from 100
-            maxHp: 150,
-            attack: 30, // Increased from 25
-            attackSpeed: 400, // Faster attacks
-            attackRange: 180, // Larger range
-            lastAttack: 0,
-            invincible: false,
-            invincibleTime: 0,
-            weaponSlots: 5,
-            abilities: []
+            x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2, size: 32,
+            baseSpeed: 3.5, speed: 3.5,  // Much slower
+            hp: 150, maxHp: 150,
+            baseAttack: 30, attack: 30,
+            baseAttackSpeed: 400, attackSpeed: 400,
+            attackRange: 180, lastAttack: 0,
+            invincible: false, invincibleTime: 0,
+            weaponSlots: 5, abilities: []  // abilities: [{type, level, ...}]
         };
 
-        // ========================================
-        // Enemies (EASIER - slower, less damage)
-        // ========================================
+        // Enemies
         let enemies = [];
         const ENEMY_TYPES = {
-            normal: { size: 24, speed: 1.2, hp: 25, damage: 8, color: '#e74c3c', dropChance: 0.6 },  // Slower, less HP
-            fast: { size: 18, speed: 2.5, hp: 12, damage: 5, color: '#e67e22', dropChance: 0.4 },
-            tank: { size: 40, speed: 0.7, hp: 60, damage: 15, color: '#8e44ad', dropChance: 0.9 }
+            normal: { size: 24, speed: 1.0, hp: 25, damage: 8, color: '#e74c3c', dropChance: 0.7 },
+            fast: { size: 18, speed: 2.0, hp: 12, damage: 5, color: '#e67e22', dropChance: 0.5 },
+            tank: { size: 40, speed: 0.5, hp: 60, damage: 15, color: '#8e44ad', dropChance: 1.0 }
         };
+        let spawnTimer = 0; const SPAWN_INTERVAL = 2500;
 
-        let spawnTimer = 0;
-        const SPAWN_INTERVAL = 2500; // Slower spawn (was 1500)
-
-        // ========================================
         // Materials
-        // ========================================
         let materials = [];
         const MATERIAL_TYPES = {
-            fire: { color: '#ff6b35', symbol: '🔥', name: '炎', effect: '攻撃力+15%' },
-            ice: { color: '#4ecdc4', symbol: '❄️', name: '氷', effect: '敵を遅くする' },
-            lightning: { color: '#f7dc6f', symbol: '⚡', name: '雷', effect: '攻撃速度+20%' },
-            wind: { color: '#a8e6cf', symbol: '💨', name: '風', effect: '移動速度+25%' },
-            dark: { color: '#6c5ce7', symbol: '💀', name: '闇', effect: '倒すとHP回復' }
+            fire: { color: '#ff6b35', symbol: '🔥', name: '炎', desc: '攻撃力UP' },
+            ice: { color: '#4ecdc4', symbol: '❄️', name: '氷', desc: '敵を遅くする' },
+            lightning: { color: '#f7dc6f', symbol: '⚡', name: '雷', desc: '攻撃速度UP' },
+            wind: { color: '#a8e6cf', symbol: '💨', name: '風', desc: '移動速度UP' },
+            dark: { color: '#6c5ce7', symbol: '💀', name: '闇', desc: '倒すとHP回復' }
         };
 
-        let projectiles = [];
-        let particles = [];
+        let projectiles = [], particles = [], floatingTexts = [], notifications = [];
 
-        // ========================================
-        // Floating Text (Damage numbers, notifications)
-        // ========================================
-        let floatingTexts = [];
+        function addFloatingText(x, y, text, color, size = 20) { floatingTexts.push({ x, y, text, color, size, life: 1, startTime: Date.now() }); }
+        function addNotification(text, color = '#fff', duration = 2000) { notifications.push({ text, color, life: 1, duration, startTime: Date.now() }); }
 
-        function addFloatingText(x, y, text, color, size = 20, duration = 1000) {
-            floatingTexts.push({
-                x, y,
-                text,
-                color,
-                size,
-                life: 1,
-                duration,
-                startTime: Date.now()
-            });
-        }
-
-        // ========================================
-        // Notifications
-        // ========================================
-        let notifications = [];
-
-        function addNotification(text, color = '#fff', duration = 2000) {
-            notifications.push({
-                text,
-                color,
-                life: 1,
-                duration,
-                startTime: Date.now()
-            });
-        }
-
-        // ========================================
         // Input
-        // ========================================
         const keys = {};
         window.addEventListener('keydown', e => {
             keys[e.key.toLowerCase()] = true;
-            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) {
-                e.preventDefault();
+            if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
+
+            // Number keys 1-5 to select slot
+            if (e.key >= '1' && e.key <= '5') {
+                const slotIndex = parseInt(e.key) - 1;
+                if (game.selectedSlot === slotIndex) {
+                    game.selectedSlot = -1; // Deselect
+                } else if (game.selectedSlot >= 0 && player.abilities[game.selectedSlot] && player.abilities[slotIndex]) {
+                    // Try to merge!
+                    tryMerge(game.selectedSlot, slotIndex);
+                    game.selectedSlot = -1;
+                } else {
+                    game.selectedSlot = slotIndex;
+                }
+            }
+            // X to delete selected ability
+            if (e.key.toLowerCase() === 'x' && game.selectedSlot >= 0 && player.abilities[game.selectedSlot]) {
+                const ability = player.abilities[game.selectedSlot];
+                player.abilities[game.selectedSlot] = null;
+                addNotification(`${ability.symbol} ${ability.name}を捨てた`, '#e74c3c');
+                applyAbilityEffects();
+                game.selectedSlot = -1;
             }
         });
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-        // ========================================
-        // Utility Functions
-        // ========================================
-        function distance(a, b) {
-            return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2);
+        // MERGE SYSTEM!
+        function tryMerge(slot1, slot2) {
+            const a1 = player.abilities[slot1];
+            const a2 = player.abilities[slot2];
+            if (!a1 || !a2) return;
+
+            if (a1.type === a2.type) {
+                // Same type - level up!
+                const newLevel = Math.min((a1.level || 1) + (a2.level || 1), 5); // Max level 5
+                player.abilities[slot1] = { ...a1, level: newLevel };
+                player.abilities[slot2] = null;
+                playSound('merge');
+                addNotification(`🔮 マージ成功！ ${a1.symbol} Lv${newLevel}！`, '#f1c40f', 3000);
+                addFloatingText(player.x, player.y - 60, `MERGE! Lv${newLevel}`, '#f1c40f', 32);
+                applyAbilityEffects();
+            } else {
+                // Different types - special combo?
+                const combo = getCombo(a1.type, a2.type);
+                if (combo) {
+                    player.abilities[slot1] = { type: combo.type, symbol: combo.symbol, name: combo.name, desc: combo.desc, color: combo.color, level: 1, isCombo: true };
+                    player.abilities[slot2] = null;
+                    playSound('merge');
+                    addNotification(`✨ 新能力発見！ ${combo.symbol} ${combo.name}！`, '#f1c40f', 3000);
+                    addFloatingText(player.x, player.y - 60, `NEW! ${combo.name}`, '#f1c40f', 32);
+                    applyAbilityEffects();
+                } else {
+                    addNotification('この組み合わせはマージできない', '#999');
+                }
+            }
         }
 
-        function randomRange(min, max) {
-            return Math.random() * (max - min) + min;
+        // Combo recipes
+        function getCombo(type1, type2) {
+            const combos = {
+                'fire+ice': { type: 'steam', symbol: '💨', name: '蒸気', desc: '敵の視界を奪う', color: '#aaa' },
+                'fire+lightning': { type: 'explosion', symbol: '💥', name: '爆発', desc: '範囲ダメージ', color: '#ff4444' },
+                'fire+wind': { type: 'firestorm', symbol: '🌪️', name: '炎嵐', desc: '周囲に炎ダメージ', color: '#ff6600' },
+                'ice+lightning': { type: 'frostbolt', symbol: '❄️⚡', name: '氷雷', desc: '貫通+スロー', color: '#00ffff' },
+                'ice+wind': { type: 'blizzard', symbol: '🌨️', name: '吹雪', desc: '広範囲スロー', color: '#88ccff' },
+                'lightning+wind': { type: 'thunder', symbol: '⛈️', name: '雷鳴', desc: 'ランダム雷撃', color: '#ffff00' },
+                'dark+fire': { type: 'hellfire', symbol: '👹', name: '獄炎', desc: 'HP吸収+攻撃力', color: '#880000' },
+                'dark+ice': { type: 'curse', symbol: '☠️', name: '呪い', desc: '敵の攻撃力低下', color: '#440066' },
+            };
+            const key1 = `${type1}+${type2}`;
+            const key2 = `${type2}+${type1}`;
+            return combos[key1] || combos[key2] || null;
         }
 
-        function randomChoice(arr) {
-            return arr[Math.floor(Math.random() * arr.length)];
-        }
+        function distance(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }
+        function randomRange(min, max) { return Math.random() * (max - min) + min; }
+        function randomChoice(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-        // ========================================
-        // Spawn Enemies
-        // ========================================
         function spawnEnemy() {
-            const side = Math.floor(Math.random() * 4);
-            let x, y;
-            const margin = 150; // Spawn further away
-
+            const side = Math.floor(Math.random() * 4); let x, y; const margin = 150;
             switch (side) {
                 case 0: x = randomRange(game.camera.x - margin, game.camera.x + GAME_WIDTH + margin); y = game.camera.y - margin; break;
                 case 1: x = randomRange(game.camera.x - margin, game.camera.x + GAME_WIDTH + margin); y = game.camera.y + GAME_HEIGHT + margin; break;
                 case 2: x = game.camera.x - margin; y = randomRange(game.camera.y - margin, game.camera.y + GAME_HEIGHT + margin); break;
                 case 3: x = game.camera.x + GAME_WIDTH + margin; y = randomRange(game.camera.y - margin, game.camera.y + GAME_HEIGHT + margin); break;
             }
-
-            // Easier enemy type selection
             let typeKey = 'normal';
-            if (game.wave >= 3 && Math.random() < 0.25) typeKey = 'fast';  // Wave 3+ for fast
-            if (game.wave >= 5 && Math.random() < 0.15) typeKey = 'tank';  // Wave 5+ for tank
-
-            const type = ENEMY_TYPES[typeKey];
-            const waveMultiplier = 1 + (game.wave - 1) * 0.08; // Slower scaling
-
-            enemies.push({
-                x, y, type: typeKey, size: type.size,
-                speed: type.speed * waveMultiplier,
-                hp: type.hp * waveMultiplier,
-                maxHp: type.hp * waveMultiplier,
-                damage: type.damage,
-                color: type.color,
-                dropChance: type.dropChance
-            });
+            if (game.wave >= 3 && Math.random() < 0.25) typeKey = 'fast';
+            if (game.wave >= 5 && Math.random() < 0.15) typeKey = 'tank';
+            const type = ENEMY_TYPES[typeKey]; const waveMultiplier = 1 + (game.wave - 1) * 0.08;
+            enemies.push({ x, y, type: typeKey, size: type.size, speed: type.speed * waveMultiplier, hp: type.hp * waveMultiplier, maxHp: type.hp * waveMultiplier, damage: type.damage, color: type.color, dropChance: type.dropChance, slowed: 0 });
         }
 
-        // ========================================
-        // Drop Material
-        // ========================================
         function dropMaterial(x, y) {
             const types = Object.keys(MATERIAL_TYPES);
             const typeKey = randomChoice(types);
@@ -290,84 +188,59 @@
             materials.push({ x, y, type: typeKey, color: type.color, symbol: type.symbol, size: 20, lifetime: 15000, bobOffset: Math.random() * Math.PI * 2 });
         }
 
-        // ========================================
-        // Particles
-        // ========================================
-        function createParticles(x, y, color, count = 10) {
-            for (let i = 0; i < count; i++) {
-                particles.push({ x, y, vx: randomRange(-3, 3), vy: randomRange(-3, 3), size: randomRange(3, 8), color, life: 1 });
-            }
-        }
+        function createParticles(x, y, color, count = 10) { for (let i = 0; i < count; i++) particles.push({ x, y, vx: randomRange(-3, 3), vy: randomRange(-3, 3), size: randomRange(3, 8), color, life: 1 }); }
 
-        // ========================================
-        // Auto Attack
-        // ========================================
         function autoAttack(timestamp) {
             if (timestamp - player.lastAttack < player.attackSpeed) return;
-            let nearest = null;
-            let nearestDist = player.attackRange;
-            for (const enemy of enemies) {
-                const dist = distance(player, enemy);
-                if (dist < nearestDist) { nearest = enemy; nearestDist = dist; }
-            }
+            let nearest = null, nearestDist = player.attackRange;
+            for (const enemy of enemies) { const dist = distance(player, enemy); if (dist < nearestDist) { nearest = enemy; nearestDist = dist; } }
             if (nearest) {
                 player.lastAttack = timestamp;
                 const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-                projectiles.push({
-                    x: player.x, y: player.y,
-                    vx: Math.cos(angle) * 14, // Faster projectiles
-                    vy: Math.sin(angle) * 14,
-                    size: 10, // Bigger
-                    damage: player.attack,
-                    color: '#f39c12',
-                    life: 1
-                });
+                projectiles.push({ x: player.x, y: player.y, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 8, damage: player.attack, color: '#f39c12', life: 1 });
                 playSound('shoot');
             }
         }
 
-        // ========================================
-        // Update Functions
-        // ========================================
         function updatePlayer() {
             let dx = 0, dy = 0;
-            if (keys['w'] || keys['arrowup']) dy -= 1;
-            if (keys['s'] || keys['arrowdown']) dy += 1;
-            if (keys['a'] || keys['arrowleft']) dx -= 1;
-            if (keys['d'] || keys['arrowright']) dx += 1;
+            if (keys['w'] || keys['arrowup']) dy -= 1; if (keys['s'] || keys['arrowdown']) dy += 1;
+            if (keys['a'] || keys['arrowleft']) dx -= 1; if (keys['d'] || keys['arrowright']) dx += 1;
             if (dx !== 0 && dy !== 0) { dx *= 0.707; dy *= 0.707; }
-            player.x += dx * player.speed;
-            player.y += dy * player.speed;
+            player.x += dx * player.speed; player.y += dy * player.speed;
             player.x = Math.max(player.size, Math.min(WORLD_WIDTH - player.size, player.x));
             player.y = Math.max(player.size, Math.min(WORLD_HEIGHT - player.size, player.y));
             if (player.invincible && Date.now() > player.invincibleTime) player.invincible = false;
         }
 
         function updateCamera() {
-            const targetX = player.x - GAME_WIDTH / 2;
-            const targetY = player.y - GAME_HEIGHT / 2;
-            game.camera.x += (targetX - game.camera.x) * 0.08; // Smoother
-            game.camera.y += (targetY - game.camera.y) * 0.08;
+            const targetX = player.x - GAME_WIDTH / 2, targetY = player.y - GAME_HEIGHT / 2;
+            game.camera.x += (targetX - game.camera.x) * 0.08; game.camera.y += (targetY - game.camera.y) * 0.08;
             game.camera.x = Math.max(0, Math.min(WORLD_WIDTH - GAME_WIDTH, game.camera.x));
             game.camera.y = Math.max(0, Math.min(WORLD_HEIGHT - GAME_HEIGHT, game.camera.y));
         }
 
+        function getAbilityPower(type) {
+            let totalLevel = 0;
+            for (const a of player.abilities) {
+                if (a && (a.type === type || (a.isCombo && a.type.includes(type)))) {
+                    totalLevel += a.level || 1;
+                }
+            }
+            return totalLevel;
+        }
+
         function updateEnemies() {
-            // Apply ice slow effect
-            const hasIce = player.abilities.some(a => a.type === 'ice');
+            const icePower = getAbilityPower('ice') + getAbilityPower('blizzard') + getAbilityPower('frostbolt');
+            const slowAmount = icePower * 0.15; // 15% slow per ice level
 
             for (const enemy of enemies) {
                 const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-                let speed = enemy.speed;
-                if (hasIce) speed *= 0.6; // Ice slows enemies
-
-                enemy.x += Math.cos(angle) * speed;
-                enemy.y += Math.sin(angle) * speed;
+                let speed = enemy.speed * (1 - Math.min(slowAmount, 0.7)); // Max 70% slow
+                enemy.x += Math.cos(angle) * speed; enemy.y += Math.sin(angle) * speed;
 
                 if (!player.invincible && distance(player, enemy) < player.size + enemy.size / 2) {
-                    player.hp -= enemy.damage;
-                    player.invincible = true;
-                    player.invincibleTime = Date.now() + 800; // Longer invincibility
+                    player.hp -= enemy.damage; player.invincible = true; player.invincibleTime = Date.now() + 800;
                     createParticles(player.x, player.y, '#e74c3c', 15);
                     addFloatingText(player.x, player.y - 30, `-${enemy.damage}`, '#e74c3c', 28);
                     playSound('damage');
@@ -377,37 +250,23 @@
         }
 
         function updateProjectiles() {
-            const hasDark = player.abilities.some(a => a.type === 'dark');
+            const darkPower = getAbilityPower('dark') + getAbilityPower('hellfire');
+            const healAmount = darkPower * 2;
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
-                const p = projectiles[i];
-                p.x += p.vx; p.y += p.vy; p.life -= 0.015;
-
+                const p = projectiles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.015;
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (distance(p, enemy) < p.size + enemy.size / 2) {
-                        enemy.hp -= p.damage;
-                        createParticles(enemy.x, enemy.y, enemy.color, 5);
-                        addFloatingText(enemy.x, enemy.y - 20, Math.round(p.damage).toString(), '#fff', 16);
-                        playSound('hit');
-
+                        enemy.hp -= p.damage; createParticles(enemy.x, enemy.y, enemy.color, 5);
+                        addFloatingText(enemy.x, enemy.y - 20, Math.round(p.damage).toString(), '#fff', 16); playSound('hit');
                         if (enemy.hp <= 0) {
-                            game.score += 10;
-                            createParticles(enemy.x, enemy.y, enemy.color, 20);
-                            playSound('kill');
-
-                            // Dark ability: heal on kill
-                            if (hasDark) {
-                                const healAmount = 5;
-                                player.hp = Math.min(player.maxHp, player.hp + healAmount);
-                                addFloatingText(player.x, player.y - 40, `+${healAmount}`, '#2ecc71', 18);
-                            }
-
+                            game.score += 10; createParticles(enemy.x, enemy.y, enemy.color, 20); playSound('kill');
+                            if (healAmount > 0) { player.hp = Math.min(player.maxHp, player.hp + healAmount); addFloatingText(player.x, player.y - 40, `+${healAmount}`, '#2ecc71', 18); }
                             if (Math.random() < enemy.dropChance) dropMaterial(enemy.x, enemy.y);
                             enemies.splice(j, 1);
                         }
-                        projectiles.splice(i, 1);
-                        break;
+                        projectiles.splice(i, 1); break;
                     }
                 }
                 if (p.life <= 0) projectiles.splice(i, 1);
@@ -416,198 +275,62 @@
 
         function updateMaterials() {
             for (let i = materials.length - 1; i >= 0; i--) {
-                const m = materials[i];
-                m.lifetime -= 16;
-                if (distance(player, m) < player.size + m.size + 10) { // Easier pickup
-                    collectMaterial(m);
-                    materials.splice(i, 1);
-                    continue;
-                }
+                const m = materials[i]; m.lifetime -= 16;
+                if (distance(player, m) < player.size + m.size + 10) { collectMaterial(m); materials.splice(i, 1); continue; }
                 if (m.lifetime <= 0) materials.splice(i, 1);
             }
         }
 
         function collectMaterial(material) {
             const type = MATERIAL_TYPES[material.type];
-            game.score += 25;
-            playSound('collect');
+            game.score += 25; playSound('collect');
 
-            if (player.abilities.length < player.weaponSlots) {
-                player.abilities.push({ type: material.type, ...type });
-                applyAbilityEffects();
-                addNotification(`${type.symbol} ${type.name}を獲得！ ${type.effect}`, type.color);
-                addFloatingText(player.x, player.y - 50, `+${type.name}`, type.color, 24);
-            } else {
-                addNotification('スロットがいっぱいです！', '#e74c3c');
+            // Find empty slot or stack with same type
+            let placed = false;
+            for (let i = 0; i < player.weaponSlots; i++) {
+                if (!player.abilities[i]) {
+                    player.abilities[i] = { type: material.type, symbol: type.symbol, name: type.name, desc: type.desc, color: type.color, level: 1 };
+                    addNotification(`${type.symbol} ${type.name}を獲得！ [${i+1}]`, type.color);
+                    placed = true;
+                    break;
+                }
+            }
+            if (!placed) {
+                addNotification('スロットがいっぱい！ [1-5]で選んで[X]で捨てるか、同じ素材を[1-5]でマージ！', '#e74c3c', 4000);
             }
             createParticles(material.x, material.y, material.color, 15);
+            applyAbilityEffects();
         }
 
         function applyAbilityEffects() {
-            // Reset to base stats
-            player.attack = 30;
-            player.speed = 6;
-            player.attackSpeed = 400;
+            player.attack = player.baseAttack;
+            player.speed = player.baseSpeed;
+            player.attackSpeed = player.baseAttackSpeed;
 
-            for (const ability of player.abilities) {
-                switch (ability.type) {
-                    case 'fire': player.attack *= 1.15; break;
-                    case 'wind': player.speed *= 1.25; break;
-                    case 'lightning': player.attackSpeed *= 0.8; break;
-                    // ice and dark are handled in combat
-                }
-            }
+            const firePower = getAbilityPower('fire') + getAbilityPower('firestorm') + getAbilityPower('hellfire') + getAbilityPower('explosion');
+            const windPower = getAbilityPower('wind') + getAbilityPower('thunder');
+            const lightningPower = getAbilityPower('lightning') + getAbilityPower('frostbolt') + getAbilityPower('thunder');
+
+            player.attack *= (1 + firePower * 0.12);  // 12% per fire level
+            player.speed += windPower * 0.4;  // +0.4 speed per wind level (gentler)
+            player.attackSpeed *= (1 - lightningPower * 0.08);  // 8% faster per lightning level
+            player.attackSpeed = Math.max(100, player.attackSpeed); // Min 100ms
         }
 
-        function updateParticles() {
-            for (let i = particles.length - 1; i >= 0; i--) {
-                const p = particles[i];
-                p.x += p.vx; p.y += p.vy; p.life -= 0.03; p.size *= 0.95;
-                if (p.life <= 0) particles.splice(i, 1);
-            }
-        }
+        function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; p.size *= 0.95; if (p.life <= 0) particles.splice(i, 1); } }
+        function updateFloatingTexts() { const now = Date.now(); for (let i = floatingTexts.length - 1; i >= 0; i--) { const ft = floatingTexts[i]; ft.life = 1 - ((now - ft.startTime) / 1000); ft.y -= 1; if (ft.life <= 0) floatingTexts.splice(i, 1); } }
+        function updateNotifications() { const now = Date.now(); for (let i = notifications.length - 1; i >= 0; i--) { const n = notifications[i]; n.life = 1 - ((now - n.startTime) / n.duration); if (n.life <= 0) notifications.splice(i, 1); } }
+        function updateWave() { const newWave = Math.floor(game.time / 45000) + 1; if (newWave > game.wave) { game.wave = newWave; addNotification(`⚔️ Wave ${game.wave} 開始！`, '#e74c3c', 3000); playSound('merge'); } }
 
-        function updateFloatingTexts() {
-            const now = Date.now();
-            for (let i = floatingTexts.length - 1; i >= 0; i--) {
-                const ft = floatingTexts[i];
-                const elapsed = now - ft.startTime;
-                ft.life = 1 - (elapsed / ft.duration);
-                ft.y -= 1; // Float upward
-                if (ft.life <= 0) floatingTexts.splice(i, 1);
-            }
-        }
-
-        function updateNotifications() {
-            const now = Date.now();
-            for (let i = notifications.length - 1; i >= 0; i--) {
-                const n = notifications[i];
-                const elapsed = now - n.startTime;
-                n.life = 1 - (elapsed / n.duration);
-                if (n.life <= 0) notifications.splice(i, 1);
-            }
-        }
-
-        let lastWave = 1;
-        function updateWave() {
-            const newWave = Math.floor(game.time / 45000) + 1; // 45 seconds per wave (was 30)
-            if (newWave > game.wave) {
-                game.wave = newWave;
-                addNotification(`⚔️ Wave ${game.wave} 開始！`, '#e74c3c', 3000);
-                playSound('levelup');
-            }
-        }
-
-        // ========================================
-        // Draw Functions
-        // ========================================
-        function drawBackground() {
-            ctx.fillStyle = '#1a1a2e';
-            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            ctx.strokeStyle = '#2a2a4e'; ctx.lineWidth = 1;
-            const gridSize = 64;
-            const startX = -game.camera.x % gridSize;
-            const startY = -game.camera.y % gridSize;
-            for (let x = startX; x < GAME_WIDTH; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GAME_HEIGHT); ctx.stroke(); }
-            for (let y = startY; y < GAME_HEIGHT; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GAME_WIDTH, y); ctx.stroke(); }
-        }
-
-        function drawPlayer() {
-            const screenX = player.x - game.camera.x;
-            const screenY = player.y - game.camera.y;
-
-            // Attack range indicator
-            ctx.strokeStyle = 'rgba(243, 156, 18, 0.15)'; ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.arc(screenX, screenY, player.attackRange, 0, Math.PI * 2); ctx.stroke();
-
-            ctx.save();
-            if (player.invincible) ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.3;
-
-            // Player glow
-            ctx.shadowColor = '#3498db';
-            ctx.shadowBlur = 20;
-
-            ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(screenX, screenY, player.size / 2, 0, Math.PI * 2); ctx.fill();
-            ctx.shadowBlur = 0;
-            ctx.fillStyle = '#5dade2'; ctx.beginPath(); ctx.arc(screenX - 5, screenY - 5, player.size / 4, 0, Math.PI * 2); ctx.fill();
-            ctx.restore();
-        }
-
-        function drawEnemies() {
-            for (const enemy of enemies) {
-                const screenX = enemy.x - game.camera.x;
-                const screenY = enemy.y - game.camera.y;
-                if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue;
-
-                ctx.fillStyle = enemy.color;
-                ctx.beginPath(); ctx.arc(screenX, screenY, enemy.size / 2, 0, Math.PI * 2); ctx.fill();
-
-                // HP bar
-                const hpPercent = enemy.hp / enemy.maxHp;
-                ctx.fillStyle = '#333'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size, 4);
-                ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f1c40f' : '#e74c3c';
-                ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size * hpPercent, 4);
-            }
-        }
-
-        function drawProjectiles() {
-            for (const p of projectiles) {
-                const screenX = p.x - game.camera.x; const screenY = p.y - game.camera.y;
-                ctx.shadowColor = p.color;
-                ctx.shadowBlur = 10;
-                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
-                ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill();
-                ctx.globalAlpha = 1;
-                ctx.shadowBlur = 0;
-            }
-        }
-
-        function drawMaterials() {
-            for (const m of materials) {
-                const screenX = m.x - game.camera.x; const screenY = m.y - game.camera.y;
-                if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue;
-                const bob = Math.sin(Date.now() * 0.005 + m.bobOffset) * 5;
-                ctx.shadowColor = m.color; ctx.shadowBlur = 20;
-                ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(m.symbol, screenX, screenY + bob);
-                ctx.shadowBlur = 0;
-            }
-        }
-
-        function drawParticles() {
-            for (const p of particles) {
-                const screenX = p.x - game.camera.x; const screenY = p.y - game.camera.y;
-                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
-                ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill();
-                ctx.globalAlpha = 1;
-            }
-        }
-
-        function drawFloatingTexts() {
-            for (const ft of floatingTexts) {
-                const screenX = ft.x - game.camera.x;
-                const screenY = ft.y - game.camera.y;
-                ctx.globalAlpha = ft.life;
-                ctx.fillStyle = ft.color;
-                ctx.font = `bold ${ft.size}px Segoe UI`;
-                ctx.textAlign = 'center';
-                ctx.fillText(ft.text, screenX, screenY);
-                ctx.globalAlpha = 1;
-            }
-        }
-
-        function drawNotifications() {
-            let y = 150;
-            for (const n of notifications) {
-                ctx.globalAlpha = n.life;
-                ctx.fillStyle = n.color;
-                ctx.font = 'bold 20px Segoe UI';
-                ctx.textAlign = 'center';
-                ctx.fillText(n.text, GAME_WIDTH / 2, y);
-                ctx.globalAlpha = 1;
-                y += 30;
-            }
-        }
+        // Drawing
+        function drawBackground() { ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.strokeStyle = '#2a2a4e'; ctx.lineWidth = 1; const gridSize = 64, startX = -game.camera.x % gridSize, startY = -game.camera.y % gridSize; for (let x = startX; x < GAME_WIDTH; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GAME_HEIGHT); ctx.stroke(); } for (let y = startY; y < GAME_HEIGHT; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GAME_WIDTH, y); ctx.stroke(); } }
+        function drawPlayer() { const screenX = player.x - game.camera.x, screenY = player.y - game.camera.y; ctx.strokeStyle = 'rgba(243, 156, 18, 0.15)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(screenX, screenY, player.attackRange, 0, Math.PI * 2); ctx.stroke(); ctx.save(); if (player.invincible) ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.3; ctx.shadowColor = '#3498db'; ctx.shadowBlur = 20; ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(screenX, screenY, player.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = '#5dade2'; ctx.beginPath(); ctx.arc(screenX - 5, screenY - 5, player.size / 4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+        function drawEnemies() { for (const enemy of enemies) { const screenX = enemy.x - game.camera.x, screenY = enemy.y - game.camera.y; if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue; ctx.fillStyle = enemy.color; ctx.beginPath(); ctx.arc(screenX, screenY, enemy.size / 2, 0, Math.PI * 2); ctx.fill(); const hpPercent = enemy.hp / enemy.maxHp; ctx.fillStyle = '#333'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size, 4); ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f1c40f' : '#e74c3c'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size * hpPercent, 4); } }
+        function drawProjectiles() { for (const p of projectiles) { const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y; ctx.shadowColor = p.color; ctx.shadowBlur = 10; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; ctx.shadowBlur = 0; } }
+        function drawMaterials() { for (const m of materials) { const screenX = m.x - game.camera.x, screenY = m.y - game.camera.y; if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue; const bob = Math.sin(Date.now() * 0.005 + m.bobOffset) * 5; ctx.shadowColor = m.color; ctx.shadowBlur = 20; ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(m.symbol, screenX, screenY + bob); ctx.shadowBlur = 0; } }
+        function drawParticles() { for (const p of particles) { const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; } }
+        function drawFloatingTexts() { for (const ft of floatingTexts) { const screenX = ft.x - game.camera.x, screenY = ft.y - game.camera.y; ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color; ctx.font = `bold ${ft.size}px Segoe UI`; ctx.textAlign = 'center'; ctx.fillText(ft.text, screenX, screenY); ctx.globalAlpha = 1; } }
+        function drawNotifications() { let y = 150; for (const n of notifications) { ctx.globalAlpha = n.life; ctx.fillStyle = n.color; ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'center'; ctx.fillText(n.text, GAME_WIDTH / 2, y); ctx.globalAlpha = 1; y += 28; } }
 
         function drawUI() {
             // HP Bar
@@ -619,114 +342,115 @@
             ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'center';
             ctx.fillText(`❤️ ${Math.ceil(player.hp)} / ${player.maxHp}`, 20 + hpBarWidth / 2, 37);
 
-            // Score & Wave
             ctx.textAlign = 'left'; ctx.font = 'bold 24px Segoe UI';
-            ctx.fillStyle = '#f1c40f'; ctx.fillText(`⭐ Score: ${game.score}`, 20, 70);
-            ctx.fillStyle = '#e74c3c'; ctx.fillText(`⚔️ Wave ${game.wave}`, 20, 100);
-            ctx.fillStyle = '#9b59b6'; ctx.font = '18px Segoe UI'; ctx.fillText(`👾 Enemies: ${enemies.length}`, 20, 130);
+            ctx.fillStyle = '#f1c40f'; ctx.fillText(`⭐ ${game.score}`, 20, 70);
+            ctx.fillStyle = '#e74c3c'; ctx.fillText(`Wave ${game.wave}`, 120, 70);
+            ctx.fillStyle = '#9b59b6'; ctx.font = '16px Segoe UI'; ctx.fillText(`👾 ${enemies.length}`, 220, 70);
 
-            // Stats
-            ctx.fillStyle = '#3498db'; ctx.font = '14px Segoe UI';
-            ctx.fillText(`ATK: ${Math.round(player.attack)} | SPD: ${player.speed.toFixed(1)} | AS: ${player.attackSpeed}ms`, 20, 155);
+            ctx.fillStyle = '#3498db'; ctx.font = '13px Segoe UI';
+            ctx.fillText(`ATK:${Math.round(player.attack)} SPD:${player.speed.toFixed(1)} AS:${Math.round(player.attackSpeed)}ms`, 20, 95);
 
             drawAbilitySlots();
 
-            // Controls hint
-            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'right';
-            ctx.fillText('WASD / Arrow Keys で移動 | 攻撃は自動', GAME_WIDTH - 20, GAME_HEIGHT - 20);
+            // Controls
+            ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '13px Segoe UI'; ctx.textAlign = 'right';
+            ctx.fillText('移動:WASD | マージ:[1-5]で2つ選択 | 捨てる:[1-5]→[X]', GAME_WIDTH - 20, GAME_HEIGHT - 20);
 
-            // VERSION (左下に大きく表示)
-            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'left';
+            // Version & Audio
+            ctx.textAlign = 'left';
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Segoe UI';
             ctx.fillText(`🎮 Merge Survivor ${VERSION}`, 20, GAME_HEIGHT - 20);
-
-            // Audio status
-            ctx.fillStyle = audioCtx ? '#2ecc71' : '#e74c3c'; ctx.font = '12px Segoe UI';
-            ctx.fillText(audioCtx ? '🔊 Sound ON' : '🔇 Click to enable sound', 20, GAME_HEIGHT - 40);
+            ctx.fillStyle = audioCtx ? '#2ecc71' : '#e74c3c'; ctx.font = '11px Segoe UI';
+            ctx.fillText(audioCtx ? '🔊 ON' : '🔇 Click', 20, GAME_HEIGHT - 38);
         }
 
         function drawAbilitySlots() {
-            const slotSize = 50;
-            const startX = GAME_WIDTH - 20 - slotSize * player.weaponSlots - 10 * (player.weaponSlots - 1);
+            const slotSize = 54, gap = 8;
+            const startX = GAME_WIDTH - 20 - (slotSize + gap) * player.weaponSlots + gap;
+            const startY = 20;
 
-            ctx.fillStyle = '#fff'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'right';
-            ctx.fillText('🎒 アビリティ', GAME_WIDTH - 20, 15);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'right';
+            ctx.fillText('🎒 アビリティ [1-5]でマージ', GAME_WIDTH - 20, 14);
 
             for (let i = 0; i < player.weaponSlots; i++) {
-                const x = startX + i * (slotSize + 10);
-                ctx.fillStyle = '#2a2a4e'; ctx.fillRect(x, 25, slotSize, slotSize);
-                ctx.strokeStyle = player.abilities[i] ? '#f1c40f' : '#4a4a6a';
-                ctx.lineWidth = 2; ctx.strokeRect(x, 25, slotSize, slotSize);
-                if (player.abilities[i]) {
-                    ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(player.abilities[i].symbol, x + slotSize / 2, 25 + slotSize / 2);
+                const x = startX + i * (slotSize + gap);
+                const ability = player.abilities[i];
+                const isSelected = game.selectedSlot === i;
+
+                // Slot background
+                ctx.fillStyle = isSelected ? '#4a4a8a' : '#2a2a4e';
+                ctx.fillRect(x, startY, slotSize, slotSize);
+                ctx.strokeStyle = isSelected ? '#f1c40f' : (ability ? '#6a6a9a' : '#3a3a5e');
+                ctx.lineWidth = isSelected ? 3 : 2;
+                ctx.strokeRect(x, startY, slotSize, slotSize);
+
+                // Slot number
+                ctx.fillStyle = '#666'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'left';
+                ctx.fillText(`[${i + 1}]`, x + 3, startY + 12);
+
+                if (ability) {
+                    // Ability icon
+                    ctx.font = '26px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(ability.symbol, x + slotSize / 2, startY + slotSize / 2);
+
+                    // Level badge
+                    if (ability.level > 1) {
+                        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 12px Segoe UI';
+                        ctx.fillText(`Lv${ability.level}`, x + slotSize / 2, startY + slotSize - 8);
+                    }
                 }
+            }
+
+            // Selected slot info
+            if (game.selectedSlot >= 0 && player.abilities[game.selectedSlot]) {
+                const ability = player.abilities[game.selectedSlot];
+                ctx.fillStyle = '#fff'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'right';
+                ctx.fillText(`${ability.symbol} ${ability.name} Lv${ability.level || 1}: ${ability.desc}`, GAME_WIDTH - 20, startY + slotSize + 18);
+                ctx.fillStyle = '#999';
+                ctx.fillText('同じ素材を選んでマージ or [X]で捨てる', GAME_WIDTH - 20, startY + slotSize + 34);
             }
         }
 
-        // ========================================
-        // Game Over
-        // ========================================
         let gameOverScreen = false;
         function gameOver() { game.running = false; gameOverScreen = true; }
-
         function drawGameOver() {
             ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 72px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 64px Segoe UI'; ctx.textAlign = 'center';
             ctx.fillText('💀 GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80);
-            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 36px Segoe UI';
-            ctx.fillText(`⭐ Score: ${game.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
-            ctx.fillStyle = '#9b59b6'; ctx.font = '24px Segoe UI';
-            ctx.fillText(`Wave ${game.wave} まで到達`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 50);
-            ctx.fillStyle = '#fff'; ctx.font = '20px Segoe UI';
-            ctx.fillText('🔄 SPACE でリスタート', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 120);
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 32px Segoe UI';
+            ctx.fillText(`Score: ${game.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
+            ctx.fillStyle = '#9b59b6'; ctx.font = '22px Segoe UI';
+            ctx.fillText(`Wave ${game.wave} まで到達`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
+            ctx.fillStyle = '#fff'; ctx.font = '18px Segoe UI';
+            ctx.fillText('🔄 SPACE でリスタート', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
         }
 
         function restart() {
             player.x = WORLD_WIDTH / 2; player.y = WORLD_HEIGHT / 2;
             player.hp = player.maxHp; player.abilities = [];
-            player.attack = 30; player.speed = 6; player.attackSpeed = 400;
-            enemies = []; materials = []; projectiles = []; particles = [];
-            floatingTexts = []; notifications = [];
-            game.score = 0; game.time = 0; game.wave = 1;
+            player.attack = player.baseAttack; player.speed = player.baseSpeed; player.attackSpeed = player.baseAttackSpeed;
+            enemies = []; materials = []; projectiles = []; particles = []; floatingTexts = []; notifications = [];
+            game.score = 0; game.time = 0; game.wave = 1; game.selectedSlot = -1;
             game.running = true; gameOverScreen = false;
-            addNotification('🎮 ゲームスタート！敵を倒して素材を集めよう！', '#2ecc71', 3000);
+            addNotification('🎮 素材を集めて[1-5]でマージしよう！', '#2ecc71', 4000);
         }
 
         window.addEventListener('keydown', e => { if (e.code === 'Space' && gameOverScreen) restart(); });
 
-        // ========================================
-        // Game Loop
-        // ========================================
         let lastTime = 0;
         function gameLoop(timestamp) {
             const deltaTime = timestamp - lastTime; lastTime = timestamp;
-
             if (game.running) {
-                game.time += deltaTime;
-                spawnTimer += deltaTime;
-                const spawnInterval = Math.max(800, SPAWN_INTERVAL - game.wave * 80); // Slower scaling
-                if (spawnTimer >= spawnInterval) {
-                    const spawnCount = Math.min(1 + Math.floor(game.wave / 3), 4); // Less enemies
-                    for (let i = 0; i < spawnCount; i++) spawnEnemy();
-                    spawnTimer = 0;
-                }
-                updatePlayer(); updateCamera(); updateEnemies();
-                autoAttack(timestamp); updateProjectiles();
-                updateMaterials(); updateParticles();
-                updateFloatingTexts(); updateNotifications();
-                updateWave();
+                game.time += deltaTime; spawnTimer += deltaTime;
+                const spawnInterval = Math.max(800, SPAWN_INTERVAL - game.wave * 80);
+                if (spawnTimer >= spawnInterval) { const spawnCount = Math.min(1 + Math.floor(game.wave / 3), 4); for (let i = 0; i < spawnCount; i++) spawnEnemy(); spawnTimer = 0; }
+                updatePlayer(); updateCamera(); updateEnemies(); autoAttack(timestamp); updateProjectiles(); updateMaterials(); updateParticles(); updateFloatingTexts(); updateNotifications(); updateWave();
             }
-
-            drawBackground(); drawMaterials(); drawEnemies();
-            drawProjectiles(); drawPlayer(); drawParticles();
-            drawFloatingTexts(); drawUI(); drawNotifications();
+            drawBackground(); drawMaterials(); drawEnemies(); drawProjectiles(); drawPlayer(); drawParticles(); drawFloatingTexts(); drawUI(); drawNotifications();
             if (gameOverScreen) drawGameOver();
-
             requestAnimationFrame(gameLoop);
         }
-
-        // Start
-        addNotification('🎮 ゲームスタート！敵を倒して素材を集めよう！', '#2ecc71', 3000);
+        addNotification('🎮 素材を集めて[1-5]でマージしよう！', '#2ecc71', 4000);
         requestAnimationFrame(gameLoop);
     </script>
 </body>
