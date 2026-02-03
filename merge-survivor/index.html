@@ -6,24 +6,24 @@
     <title>Merge Survivor</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; }
+        body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Segoe UI', sans-serif; user-select: none; }
         #game-container { position: relative; }
-        canvas { border: 3px solid #4a4a6a; border-radius: 8px; }
+        canvas { border: 3px solid #4a4a6a; border-radius: 8px; cursor: crosshair; }
     </style>
 </head>
 <body>
     <div id="game-container"><canvas id="gameCanvas"></canvas></div>
     <script>
-        const VERSION = 'v0.3';
+        const VERSION = 'v0.4';
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const GAME_WIDTH = 1024, GAME_HEIGHT = 768, WORLD_WIDTH = 2000, WORLD_HEIGHT = 2000;
         canvas.width = GAME_WIDTH; canvas.height = GAME_HEIGHT;
 
-        // Sound System
+        // Sound
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         let audioCtx = null;
-        function initAudio() { if (!audioCtx) { audioCtx = new AudioCtx(); } }
+        function initAudio() { if (!audioCtx) audioCtx = new AudioCtx(); }
         function playSound(type) {
             if (!audioCtx) return;
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -46,120 +46,185 @@
         document.addEventListener('keydown', initAudio, { once: true });
 
         // Game State
-        const game = { running: true, score: 0, time: 0, wave: 1, camera: { x: 0, y: 0 }, selectedSlot: -1, mergeMode: false };
+        const game = { running: true, score: 0, time: 0, wave: 1, camera: { x: 0, y: 0 }, showRecipes: false };
 
-        // Player - SLOWER base speed
+        // Player
         const player = {
             x: WORLD_WIDTH / 2, y: WORLD_HEIGHT / 2, size: 32,
-            baseSpeed: 3.5, speed: 3.5,  // Much slower
-            hp: 150, maxHp: 150,
-            baseAttack: 30, attack: 30,
-            baseAttackSpeed: 400, attackSpeed: 400,
-            attackRange: 180, lastAttack: 0,
+            baseSpeed: 3.5, speed: 3.5,
+            hp: 100, maxHp: 100,
+            baseAttack: 25, attack: 25,
+            baseAttackSpeed: 450, attackSpeed: 450,
+            attackRange: 160, lastAttack: 0,
             invincible: false, invincibleTime: 0,
-            weaponSlots: 5, abilities: []  // abilities: [{type, level, ...}]
+            weaponSlots: 5, abilities: []
         };
 
-        // Enemies
+        // Enemies - HARDER
         let enemies = [];
         const ENEMY_TYPES = {
-            normal: { size: 24, speed: 1.0, hp: 25, damage: 8, color: '#e74c3c', dropChance: 0.7 },
-            fast: { size: 18, speed: 2.0, hp: 12, damage: 5, color: '#e67e22', dropChance: 0.5 },
-            tank: { size: 40, speed: 0.5, hp: 60, damage: 15, color: '#8e44ad', dropChance: 1.0 }
+            normal: { size: 24, speed: 1.5, hp: 35, damage: 12, color: '#e74c3c', dropChance: 0.5 },
+            fast: { size: 18, speed: 3.0, hp: 20, damage: 8, color: '#e67e22', dropChance: 0.4 },
+            tank: { size: 40, speed: 0.8, hp: 80, damage: 20, color: '#8e44ad', dropChance: 0.9 }
         };
-        let spawnTimer = 0; const SPAWN_INTERVAL = 2500;
+        let spawnTimer = 0; const SPAWN_INTERVAL = 1800;
 
         // Materials
         let materials = [];
         const MATERIAL_TYPES = {
-            fire: { color: '#ff6b35', symbol: '🔥', name: '炎', desc: '攻撃力UP' },
-            ice: { color: '#4ecdc4', symbol: '❄️', name: '氷', desc: '敵を遅くする' },
-            lightning: { color: '#f7dc6f', symbol: '⚡', name: '雷', desc: '攻撃速度UP' },
-            wind: { color: '#a8e6cf', symbol: '💨', name: '風', desc: '移動速度UP' },
-            dark: { color: '#6c5ce7', symbol: '💀', name: '闇', desc: '倒すとHP回復' }
+            fire: { color: '#ff6b35', symbol: '🔥', name: '炎', desc: '攻撃力UP', effectColor: '#ff4400' },
+            ice: { color: '#4ecdc4', symbol: '❄️', name: '氷', desc: '敵を遅くする', effectColor: '#00ddff' },
+            lightning: { color: '#f7dc6f', symbol: '⚡', name: '雷', desc: '攻撃速度UP', effectColor: '#ffff00' },
+            wind: { color: '#a8e6cf', symbol: '💨', name: '風', desc: '移動速度UP', effectColor: '#88ff88' },
+            dark: { color: '#6c5ce7', symbol: '💀', name: '闘', desc: '倒すとHP回復', effectColor: '#aa44ff' }
         };
+
+        // Combo Recipes
+        const COMBOS = {
+            'fire+ice': { type: 'steam', symbol: '♨️', name: '蒸気', desc: '攻撃範囲UP', effectColor: '#cccccc' },
+            'fire+lightning': { type: 'explosion', symbol: '💥', name: '爆発', desc: '範囲ダメージ', effectColor: '#ff8800' },
+            'fire+wind': { type: 'firestorm', symbol: '🌪️', name: '炎嵐', desc: '攻撃力大UP', effectColor: '#ff6600' },
+            'fire+dark': { type: 'hellfire', symbol: '👹', name: '獄炎', desc: 'HP吸収+攻撃', effectColor: '#880000' },
+            'ice+lightning': { type: 'frostbolt', symbol: '🧊', name: '氷雷', desc: '攻速+スロー', effectColor: '#00ffff' },
+            'ice+wind': { type: 'blizzard', symbol: '🌨️', name: '吹雪', desc: '広範囲スロー', effectColor: '#aaddff' },
+            'ice+dark': { type: 'curse', symbol: '☠️', name: '呪い', desc: '敵弱体化', effectColor: '#440066' },
+            'lightning+wind': { type: 'thunder', symbol: '⛈️', name: '雷鳴', desc: '攻速大UP', effectColor: '#ffff44' },
+            'lightning+dark': { type: 'void', symbol: '🕳️', name: '虚無', desc: '即死確率', effectColor: '#220044' },
+            'wind+dark': { type: 'shadow', symbol: '👤', name: '影', desc: '回避UP', effectColor: '#333366' }
+        };
+
+        // Discovered recipes (saved to localStorage)
+        let discoveredRecipes = JSON.parse(localStorage.getItem('mergeRecipes') || '[]');
 
         let projectiles = [], particles = [], floatingTexts = [], notifications = [];
 
         function addFloatingText(x, y, text, color, size = 20) { floatingTexts.push({ x, y, text, color, size, life: 1, startTime: Date.now() }); }
         function addNotification(text, color = '#fff', duration = 2000) { notifications.push({ text, color, life: 1, duration, startTime: Date.now() }); }
 
-        // Input
+        // Drag & Drop for merge
+        let dragState = { dragging: false, slotIndex: -1, startX: 0, startY: 0, currentX: 0, currentY: 0 };
+
+        // Slot positions for hit detection
+        function getSlotRect(index) {
+            const slotSize = 54, gap = 8;
+            const startX = GAME_WIDTH - 20 - (slotSize + gap) * player.weaponSlots + gap;
+            const x = startX + index * (slotSize + gap);
+            return { x, y: 20, width: slotSize, height: slotSize };
+        }
+
+        // Mouse events
+        canvas.addEventListener('mousedown', e => {
+            const rect = canvas.getBoundingClientRect();
+            const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+            // Check if clicking on a slot
+            for (let i = 0; i < player.weaponSlots; i++) {
+                const slot = getSlotRect(i);
+                if (mx >= slot.x && mx <= slot.x + slot.width && my >= slot.y && my <= slot.y + slot.height) {
+                    if (player.abilities[i]) {
+                        dragState = { dragging: true, slotIndex: i, startX: mx, startY: my, currentX: mx, currentY: my };
+                    }
+                    return;
+                }
+            }
+        });
+
+        canvas.addEventListener('mousemove', e => {
+            const rect = canvas.getBoundingClientRect();
+            dragState.currentX = e.clientX - rect.left;
+            dragState.currentY = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mouseup', e => {
+            if (dragState.dragging) {
+                const rect = canvas.getBoundingClientRect();
+                const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+
+                // Check if dropping on another slot
+                for (let i = 0; i < player.weaponSlots; i++) {
+                    if (i === dragState.slotIndex) continue;
+                    const slot = getSlotRect(i);
+                    if (mx >= slot.x && mx <= slot.x + slot.width && my >= slot.y && my <= slot.y + slot.height) {
+                        if (player.abilities[i]) {
+                            tryMerge(dragState.slotIndex, i);
+                        } else {
+                            // Move to empty slot
+                            player.abilities[i] = player.abilities[dragState.slotIndex];
+                            player.abilities[dragState.slotIndex] = null;
+                        }
+                        break;
+                    }
+                }
+
+                // Check if dropping outside slots (discard)
+                let overAnySlot = false;
+                for (let i = 0; i < player.weaponSlots; i++) {
+                    const slot = getSlotRect(i);
+                    if (mx >= slot.x && mx <= slot.x + slot.width && my >= slot.y && my <= slot.y + slot.height) {
+                        overAnySlot = true;
+                        break;
+                    }
+                }
+                if (!overAnySlot && my > 100) {
+                    const ability = player.abilities[dragState.slotIndex];
+                    if (ability) {
+                        player.abilities[dragState.slotIndex] = null;
+                        addNotification(`${ability.symbol} を捨てた`, '#e74c3c');
+                        applyAbilityEffects();
+                    }
+                }
+            }
+            dragState.dragging = false;
+        });
+
+        // Keyboard
         const keys = {};
         window.addEventListener('keydown', e => {
             keys[e.key.toLowerCase()] = true;
             if (['arrowup', 'arrowdown', 'arrowleft', 'arrowright', ' '].includes(e.key.toLowerCase())) e.preventDefault();
-
-            // Number keys 1-5 to select slot
-            if (e.key >= '1' && e.key <= '5') {
-                const slotIndex = parseInt(e.key) - 1;
-                if (game.selectedSlot === slotIndex) {
-                    game.selectedSlot = -1; // Deselect
-                } else if (game.selectedSlot >= 0 && player.abilities[game.selectedSlot] && player.abilities[slotIndex]) {
-                    // Try to merge!
-                    tryMerge(game.selectedSlot, slotIndex);
-                    game.selectedSlot = -1;
-                } else {
-                    game.selectedSlot = slotIndex;
-                }
-            }
-            // X to delete selected ability
-            if (e.key.toLowerCase() === 'x' && game.selectedSlot >= 0 && player.abilities[game.selectedSlot]) {
-                const ability = player.abilities[game.selectedSlot];
-                player.abilities[game.selectedSlot] = null;
-                addNotification(`${ability.symbol} ${ability.name}を捨てた`, '#e74c3c');
-                applyAbilityEffects();
-                game.selectedSlot = -1;
-            }
+            if (e.key.toLowerCase() === 'r') game.showRecipes = !game.showRecipes;
         });
         window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
-        // MERGE SYSTEM!
+        // Merge
         function tryMerge(slot1, slot2) {
-            const a1 = player.abilities[slot1];
-            const a2 = player.abilities[slot2];
+            const a1 = player.abilities[slot1], a2 = player.abilities[slot2];
             if (!a1 || !a2) return;
 
-            if (a1.type === a2.type) {
-                // Same type - level up!
-                const newLevel = Math.min((a1.level || 1) + (a2.level || 1), 5); // Max level 5
+            if (a1.type === a2.type && !a1.isCombo && !a2.isCombo) {
+                const newLevel = Math.min((a1.level || 1) + (a2.level || 1), 5);
                 player.abilities[slot1] = { ...a1, level: newLevel };
                 player.abilities[slot2] = null;
                 playSound('merge');
-                addNotification(`🔮 マージ成功！ ${a1.symbol} Lv${newLevel}！`, '#f1c40f', 3000);
-                addFloatingText(player.x, player.y - 60, `MERGE! Lv${newLevel}`, '#f1c40f', 32);
-                applyAbilityEffects();
+                addNotification(`🔮 ${a1.symbol} Lv${newLevel}！`, '#f1c40f', 2500);
+                addFloatingText(player.x, player.y - 60, `Lv${newLevel}!`, '#f1c40f', 36);
             } else {
-                // Different types - special combo?
                 const combo = getCombo(a1.type, a2.type);
                 if (combo) {
-                    player.abilities[slot1] = { type: combo.type, symbol: combo.symbol, name: combo.name, desc: combo.desc, color: combo.color, level: 1, isCombo: true };
+                    player.abilities[slot1] = { ...combo, level: 1, isCombo: true };
                     player.abilities[slot2] = null;
                     playSound('merge');
-                    addNotification(`✨ 新能力発見！ ${combo.symbol} ${combo.name}！`, '#f1c40f', 3000);
-                    addFloatingText(player.x, player.y - 60, `NEW! ${combo.name}`, '#f1c40f', 32);
-                    applyAbilityEffects();
+
+                    // Discover recipe
+                    const recipeKey = [a1.type, a2.type].sort().join('+');
+                    if (!discoveredRecipes.includes(recipeKey)) {
+                        discoveredRecipes.push(recipeKey);
+                        localStorage.setItem('mergeRecipes', JSON.stringify(discoveredRecipes));
+                        addNotification(`📖 新レシピ発見！ ${combo.symbol} ${combo.name}`, '#f1c40f', 4000);
+                    } else {
+                        addNotification(`✨ ${combo.symbol} ${combo.name}！`, '#f1c40f', 2500);
+                    }
+                    addFloatingText(player.x, player.y - 60, combo.name, '#f1c40f', 36);
                 } else {
-                    addNotification('この組み合わせはマージできない', '#999');
+                    addNotification('マージできない組み合わせ', '#999', 1500);
                 }
             }
+            applyAbilityEffects();
         }
 
-        // Combo recipes
         function getCombo(type1, type2) {
-            const combos = {
-                'fire+ice': { type: 'steam', symbol: '💨', name: '蒸気', desc: '敵の視界を奪う', color: '#aaa' },
-                'fire+lightning': { type: 'explosion', symbol: '💥', name: '爆発', desc: '範囲ダメージ', color: '#ff4444' },
-                'fire+wind': { type: 'firestorm', symbol: '🌪️', name: '炎嵐', desc: '周囲に炎ダメージ', color: '#ff6600' },
-                'ice+lightning': { type: 'frostbolt', symbol: '❄️⚡', name: '氷雷', desc: '貫通+スロー', color: '#00ffff' },
-                'ice+wind': { type: 'blizzard', symbol: '🌨️', name: '吹雪', desc: '広範囲スロー', color: '#88ccff' },
-                'lightning+wind': { type: 'thunder', symbol: '⛈️', name: '雷鳴', desc: 'ランダム雷撃', color: '#ffff00' },
-                'dark+fire': { type: 'hellfire', symbol: '👹', name: '獄炎', desc: 'HP吸収+攻撃力', color: '#880000' },
-                'dark+ice': { type: 'curse', symbol: '☠️', name: '呪い', desc: '敵の攻撃力低下', color: '#440066' },
-            };
-            const key1 = `${type1}+${type2}`;
-            const key2 = `${type2}+${type1}`;
-            return combos[key1] || combos[key2] || null;
+            const key1 = `${type1}+${type2}`, key2 = `${type2}+${type1}`;
+            return COMBOS[key1] || COMBOS[key2] || null;
         }
 
         function distance(a, b) { return Math.sqrt((a.x - b.x) ** 2 + (a.y - b.y) ** 2); }
@@ -175,20 +240,43 @@
                 case 3: x = game.camera.x + GAME_WIDTH + margin; y = randomRange(game.camera.y - margin, game.camera.y + GAME_HEIGHT + margin); break;
             }
             let typeKey = 'normal';
-            if (game.wave >= 3 && Math.random() < 0.25) typeKey = 'fast';
-            if (game.wave >= 5 && Math.random() < 0.15) typeKey = 'tank';
-            const type = ENEMY_TYPES[typeKey]; const waveMultiplier = 1 + (game.wave - 1) * 0.08;
-            enemies.push({ x, y, type: typeKey, size: type.size, speed: type.speed * waveMultiplier, hp: type.hp * waveMultiplier, maxHp: type.hp * waveMultiplier, damage: type.damage, color: type.color, dropChance: type.dropChance, slowed: 0 });
+            if (game.wave >= 2 && Math.random() < 0.3) typeKey = 'fast';
+            if (game.wave >= 3 && Math.random() < 0.2) typeKey = 'tank';
+            const type = ENEMY_TYPES[typeKey];
+            const waveMultiplier = 1 + (game.wave - 1) * 0.12;
+            enemies.push({ x, y, type: typeKey, size: type.size, speed: type.speed * waveMultiplier, hp: type.hp * waveMultiplier, maxHp: type.hp * waveMultiplier, damage: type.damage * (1 + (game.wave-1)*0.05), color: type.color, dropChance: type.dropChance });
         }
 
         function dropMaterial(x, y) {
             const types = Object.keys(MATERIAL_TYPES);
             const typeKey = randomChoice(types);
             const type = MATERIAL_TYPES[typeKey];
-            materials.push({ x, y, type: typeKey, color: type.color, symbol: type.symbol, size: 20, lifetime: 15000, bobOffset: Math.random() * Math.PI * 2 });
+            materials.push({ x, y, type: typeKey, color: type.color, symbol: type.symbol, size: 20, lifetime: 12000, bobOffset: Math.random() * Math.PI * 2 });
         }
 
-        function createParticles(x, y, color, count = 10) { for (let i = 0; i < count; i++) particles.push({ x, y, vx: randomRange(-3, 3), vy: randomRange(-3, 3), size: randomRange(3, 8), color, life: 1 }); }
+        function createParticles(x, y, color, count = 10) {
+            for (let i = 0; i < count; i++) particles.push({ x, y, vx: randomRange(-4, 4), vy: randomRange(-4, 4), size: randomRange(3, 10), color, life: 1 });
+        }
+
+        // Get projectile color based on abilities
+        function getProjectileColor() {
+            const colors = [];
+            for (const a of player.abilities) {
+                if (a && a.effectColor) colors.push(a.effectColor);
+                else if (a && MATERIAL_TYPES[a.type]) colors.push(MATERIAL_TYPES[a.type].effectColor);
+            }
+            return colors.length > 0 ? colors[Math.floor(Date.now() / 100) % colors.length] : '#f39c12';
+        }
+
+        function getAbilityPower(type) {
+            let total = 0;
+            for (const a of player.abilities) {
+                if (a && (a.type === type || (a.isCombo && a.type.includes(type.substring(0,3))))) {
+                    total += a.level || 1;
+                }
+            }
+            return total;
+        }
 
         function autoAttack(timestamp) {
             if (timestamp - player.lastAttack < player.attackSpeed) return;
@@ -197,8 +285,12 @@
             if (nearest) {
                 player.lastAttack = timestamp;
                 const angle = Math.atan2(nearest.y - player.y, nearest.x - player.x);
-                projectiles.push({ x: player.x, y: player.y, vx: Math.cos(angle) * 12, vy: Math.sin(angle) * 12, size: 8, damage: player.attack, color: '#f39c12', life: 1 });
+                const color = getProjectileColor();
+                const size = 8 + getAbilityPower('explosion') * 2;
+                projectiles.push({ x: player.x, y: player.y, vx: Math.cos(angle) * 13, vy: Math.sin(angle) * 13, size, damage: player.attack, color, life: 1 });
                 playSound('shoot');
+                // Muzzle flash particles
+                createParticles(player.x + Math.cos(angle) * 20, player.y + Math.sin(angle) * 20, color, 3);
             }
         }
 
@@ -220,49 +312,82 @@
             game.camera.y = Math.max(0, Math.min(WORLD_HEIGHT - GAME_HEIGHT, game.camera.y));
         }
 
-        function getAbilityPower(type) {
-            let totalLevel = 0;
-            for (const a of player.abilities) {
-                if (a && (a.type === type || (a.isCombo && a.type.includes(type)))) {
-                    totalLevel += a.level || 1;
-                }
-            }
-            return totalLevel;
-        }
-
         function updateEnemies() {
-            const icePower = getAbilityPower('ice') + getAbilityPower('blizzard') + getAbilityPower('frostbolt');
-            const slowAmount = icePower * 0.15; // 15% slow per ice level
+            const icePower = getAbilityPower('ice') + getAbilityPower('blizzard') * 2 + getAbilityPower('frostbolt');
+            const cursePower = getAbilityPower('curse');
+            const slowAmount = Math.min(icePower * 0.12, 0.6);
 
             for (const enemy of enemies) {
                 const angle = Math.atan2(player.y - enemy.y, player.x - enemy.x);
-                let speed = enemy.speed * (1 - Math.min(slowAmount, 0.7)); // Max 70% slow
+                let speed = enemy.speed * (1 - slowAmount);
                 enemy.x += Math.cos(angle) * speed; enemy.y += Math.sin(angle) * speed;
 
+                // Curse weakens enemies
+                const damageReduction = Math.min(cursePower * 0.1, 0.5);
+                const actualDamage = Math.floor(enemy.damage * (1 - damageReduction));
+
                 if (!player.invincible && distance(player, enemy) < player.size + enemy.size / 2) {
-                    player.hp -= enemy.damage; player.invincible = true; player.invincibleTime = Date.now() + 800;
-                    createParticles(player.x, player.y, '#e74c3c', 15);
-                    addFloatingText(player.x, player.y - 30, `-${enemy.damage}`, '#e74c3c', 28);
-                    playSound('damage');
-                    if (player.hp <= 0) gameOver();
+                    // Shadow ability dodge chance
+                    const shadowPower = getAbilityPower('shadow');
+                    if (Math.random() < shadowPower * 0.1) {
+                        addFloatingText(player.x, player.y - 30, 'DODGE!', '#aaaaff', 24);
+                    } else {
+                        player.hp -= actualDamage;
+                        player.invincible = true; player.invincibleTime = Date.now() + 600;
+                        createParticles(player.x, player.y, '#e74c3c', 15);
+                        addFloatingText(player.x, player.y - 30, `-${actualDamage}`, '#e74c3c', 28);
+                        playSound('damage');
+                        if (player.hp <= 0) gameOver();
+                    }
                 }
             }
         }
 
         function updateProjectiles() {
-            const darkPower = getAbilityPower('dark') + getAbilityPower('hellfire');
-            const healAmount = darkPower * 2;
+            const darkPower = getAbilityPower('dark') + getAbilityPower('hellfire') * 2;
+            const voidPower = getAbilityPower('void');
+            const explosionPower = getAbilityPower('explosion');
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
-                const p = projectiles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.015;
+                const p = projectiles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.012;
                 for (let j = enemies.length - 1; j >= 0; j--) {
                     const enemy = enemies[j];
                     if (distance(p, enemy) < p.size + enemy.size / 2) {
-                        enemy.hp -= p.damage; createParticles(enemy.x, enemy.y, enemy.color, 5);
-                        addFloatingText(enemy.x, enemy.y - 20, Math.round(p.damage).toString(), '#fff', 16); playSound('hit');
+                        // Void instant kill chance
+                        if (voidPower > 0 && Math.random() < voidPower * 0.05) {
+                            enemy.hp = 0;
+                            addFloatingText(enemy.x, enemy.y - 20, 'VOID!', '#8800ff', 24);
+                        } else {
+                            enemy.hp -= p.damage;
+                        }
+
+                        createParticles(enemy.x, enemy.y, p.color, 8);
+                        addFloatingText(enemy.x, enemy.y - 20, Math.round(p.damage).toString(), '#fff', 16);
+                        playSound('hit');
+
+                        // Explosion area damage
+                        if (explosionPower > 0) {
+                            const radius = 50 + explosionPower * 20;
+                            for (const other of enemies) {
+                                if (other !== enemy && distance(enemy, other) < radius) {
+                                    other.hp -= p.damage * 0.5;
+                                    createParticles(other.x, other.y, '#ff8800', 5);
+                                }
+                            }
+                        }
+
                         if (enemy.hp <= 0) {
-                            game.score += 10; createParticles(enemy.x, enemy.y, enemy.color, 20); playSound('kill');
-                            if (healAmount > 0) { player.hp = Math.min(player.maxHp, player.hp + healAmount); addFloatingText(player.x, player.y - 40, `+${healAmount}`, '#2ecc71', 18); }
+                            game.score += 10;
+                            createParticles(enemy.x, enemy.y, enemy.color, 25);
+                            playSound('kill');
+
+                            // Dark heal
+                            if (darkPower > 0) {
+                                const heal = darkPower * 3;
+                                player.hp = Math.min(player.maxHp, player.hp + heal);
+                                addFloatingText(player.x, player.y - 40, `+${heal}`, '#2ecc71', 20);
+                            }
+
                             if (Math.random() < enemy.dropChance) dropMaterial(enemy.x, enemy.y);
                             enemies.splice(j, 1);
                         }
@@ -276,7 +401,7 @@
         function updateMaterials() {
             for (let i = materials.length - 1; i >= 0; i--) {
                 const m = materials[i]; m.lifetime -= 16;
-                if (distance(player, m) < player.size + m.size + 10) { collectMaterial(m); materials.splice(i, 1); continue; }
+                if (distance(player, m) < player.size + m.size + 15) { collectMaterial(m); materials.splice(i, 1); continue; }
                 if (m.lifetime <= 0) materials.splice(i, 1);
             }
         }
@@ -284,20 +409,15 @@
         function collectMaterial(material) {
             const type = MATERIAL_TYPES[material.type];
             game.score += 25; playSound('collect');
-
-            // Find empty slot or stack with same type
             let placed = false;
             for (let i = 0; i < player.weaponSlots; i++) {
                 if (!player.abilities[i]) {
-                    player.abilities[i] = { type: material.type, symbol: type.symbol, name: type.name, desc: type.desc, color: type.color, level: 1 };
-                    addNotification(`${type.symbol} ${type.name}を獲得！ [${i+1}]`, type.color);
-                    placed = true;
-                    break;
+                    player.abilities[i] = { type: material.type, symbol: type.symbol, name: type.name, desc: type.desc, color: type.color, effectColor: type.effectColor, level: 1 };
+                    addNotification(`${type.symbol} ${type.name}`, type.color, 1500);
+                    placed = true; break;
                 }
             }
-            if (!placed) {
-                addNotification('スロットがいっぱい！ [1-5]で選んで[X]で捨てるか、同じ素材を[1-5]でマージ！', '#e74c3c', 4000);
-            }
+            if (!placed) addNotification('スロット満杯！ドラッグで整理しよう', '#e74c3c', 2500);
             createParticles(material.x, material.y, material.color, 15);
             applyAbilityEffects();
         }
@@ -306,133 +426,272 @@
             player.attack = player.baseAttack;
             player.speed = player.baseSpeed;
             player.attackSpeed = player.baseAttackSpeed;
+            player.attackRange = 160;
 
-            const firePower = getAbilityPower('fire') + getAbilityPower('firestorm') + getAbilityPower('hellfire') + getAbilityPower('explosion');
-            const windPower = getAbilityPower('wind') + getAbilityPower('thunder');
-            const lightningPower = getAbilityPower('lightning') + getAbilityPower('frostbolt') + getAbilityPower('thunder');
+            const firePower = getAbilityPower('fire') + getAbilityPower('firestorm') * 1.5 + getAbilityPower('hellfire');
+            const windPower = getAbilityPower('wind') + getAbilityPower('thunder') * 0.5;
+            const lightningPower = getAbilityPower('lightning') + getAbilityPower('frostbolt') + getAbilityPower('thunder') * 1.5;
+            const steamPower = getAbilityPower('steam');
 
-            player.attack *= (1 + firePower * 0.12);  // 12% per fire level
-            player.speed += windPower * 0.4;  // +0.4 speed per wind level (gentler)
-            player.attackSpeed *= (1 - lightningPower * 0.08);  // 8% faster per lightning level
-            player.attackSpeed = Math.max(100, player.attackSpeed); // Min 100ms
+            player.attack *= (1 + firePower * 0.15);
+            player.speed += windPower * 0.5;
+            player.attackSpeed *= (1 - lightningPower * 0.1);
+            player.attackSpeed = Math.max(80, player.attackSpeed);
+            player.attackRange += steamPower * 30;
         }
 
-        function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.03; p.size *= 0.95; if (p.life <= 0) particles.splice(i, 1); } }
-        function updateFloatingTexts() { const now = Date.now(); for (let i = floatingTexts.length - 1; i >= 0; i--) { const ft = floatingTexts[i]; ft.life = 1 - ((now - ft.startTime) / 1000); ft.y -= 1; if (ft.life <= 0) floatingTexts.splice(i, 1); } }
-        function updateNotifications() { const now = Date.now(); for (let i = notifications.length - 1; i >= 0; i--) { const n = notifications[i]; n.life = 1 - ((now - n.startTime) / n.duration); if (n.life <= 0) notifications.splice(i, 1); } }
-        function updateWave() { const newWave = Math.floor(game.time / 45000) + 1; if (newWave > game.wave) { game.wave = newWave; addNotification(`⚔️ Wave ${game.wave} 開始！`, '#e74c3c', 3000); playSound('merge'); } }
+        function updateParticles() { for (let i = particles.length - 1; i >= 0; i--) { const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vy += 0.1; p.life -= 0.025; p.size *= 0.96; if (p.life <= 0) particles.splice(i, 1); } }
+        function updateFloatingTexts() { for (let i = floatingTexts.length - 1; i >= 0; i--) { const ft = floatingTexts[i]; ft.life = 1 - ((Date.now() - ft.startTime) / 800); ft.y -= 1.5; if (ft.life <= 0) floatingTexts.splice(i, 1); } }
+        function updateNotifications() { for (let i = notifications.length - 1; i >= 0; i--) { const n = notifications[i]; n.life = 1 - ((Date.now() - n.startTime) / n.duration); if (n.life <= 0) notifications.splice(i, 1); } }
+        function updateWave() { const newWave = Math.floor(game.time / 40000) + 1; if (newWave > game.wave) { game.wave = newWave; addNotification(`⚔️ Wave ${game.wave}`, '#e74c3c', 2500); playSound('merge'); } }
 
         // Drawing
-        function drawBackground() { ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT); ctx.strokeStyle = '#2a2a4e'; ctx.lineWidth = 1; const gridSize = 64, startX = -game.camera.x % gridSize, startY = -game.camera.y % gridSize; for (let x = startX; x < GAME_WIDTH; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GAME_HEIGHT); ctx.stroke(); } for (let y = startY; y < GAME_HEIGHT; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GAME_WIDTH, y); ctx.stroke(); } }
-        function drawPlayer() { const screenX = player.x - game.camera.x, screenY = player.y - game.camera.y; ctx.strokeStyle = 'rgba(243, 156, 18, 0.15)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(screenX, screenY, player.attackRange, 0, Math.PI * 2); ctx.stroke(); ctx.save(); if (player.invincible) ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.3; ctx.shadowColor = '#3498db'; ctx.shadowBlur = 20; ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(screenX, screenY, player.size / 2, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; ctx.fillStyle = '#5dade2'; ctx.beginPath(); ctx.arc(screenX - 5, screenY - 5, player.size / 4, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
-        function drawEnemies() { for (const enemy of enemies) { const screenX = enemy.x - game.camera.x, screenY = enemy.y - game.camera.y; if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue; ctx.fillStyle = enemy.color; ctx.beginPath(); ctx.arc(screenX, screenY, enemy.size / 2, 0, Math.PI * 2); ctx.fill(); const hpPercent = enemy.hp / enemy.maxHp; ctx.fillStyle = '#333'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size, 4); ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f1c40f' : '#e74c3c'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size * hpPercent, 4); } }
-        function drawProjectiles() { for (const p of projectiles) { const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y; ctx.shadowColor = p.color; ctx.shadowBlur = 10; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; ctx.shadowBlur = 0; } }
-        function drawMaterials() { for (const m of materials) { const screenX = m.x - game.camera.x, screenY = m.y - game.camera.y; if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue; const bob = Math.sin(Date.now() * 0.005 + m.bobOffset) * 5; ctx.shadowColor = m.color; ctx.shadowBlur = 20; ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(m.symbol, screenX, screenY + bob); ctx.shadowBlur = 0; } }
-        function drawParticles() { for (const p of particles) { const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y; ctx.fillStyle = p.color; ctx.globalAlpha = p.life; ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill(); ctx.globalAlpha = 1; } }
-        function drawFloatingTexts() { for (const ft of floatingTexts) { const screenX = ft.x - game.camera.x, screenY = ft.y - game.camera.y; ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color; ctx.font = `bold ${ft.size}px Segoe UI`; ctx.textAlign = 'center'; ctx.fillText(ft.text, screenX, screenY); ctx.globalAlpha = 1; } }
-        function drawNotifications() { let y = 150; for (const n of notifications) { ctx.globalAlpha = n.life; ctx.fillStyle = n.color; ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'center'; ctx.fillText(n.text, GAME_WIDTH / 2, y); ctx.globalAlpha = 1; y += 28; } }
+        function drawBackground() {
+            ctx.fillStyle = '#1a1a2e'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.strokeStyle = '#2a2a4e'; ctx.lineWidth = 1;
+            const gridSize = 64, startX = -game.camera.x % gridSize, startY = -game.camera.y % gridSize;
+            for (let x = startX; x < GAME_WIDTH; x += gridSize) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, GAME_HEIGHT); ctx.stroke(); }
+            for (let y = startY; y < GAME_HEIGHT; y += gridSize) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(GAME_WIDTH, y); ctx.stroke(); }
+        }
+
+        function drawPlayer() {
+            const screenX = player.x - game.camera.x, screenY = player.y - game.camera.y;
+
+            // Attack range
+            ctx.strokeStyle = 'rgba(243, 156, 18, 0.1)'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(screenX, screenY, player.attackRange, 0, Math.PI * 2); ctx.stroke();
+
+            // Aura based on abilities
+            const colors = [];
+            for (const a of player.abilities) {
+                if (a) colors.push(a.effectColor || MATERIAL_TYPES[a.type]?.effectColor || '#fff');
+            }
+            if (colors.length > 0) {
+                const auraColor = colors[Math.floor(Date.now() / 200) % colors.length];
+                ctx.shadowColor = auraColor;
+                ctx.shadowBlur = 25 + Math.sin(Date.now() * 0.01) * 10;
+            }
+
+            ctx.save();
+            if (player.invincible) ctx.globalAlpha = 0.5 + Math.sin(Date.now() * 0.02) * 0.3;
+            ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(screenX, screenY, player.size / 2, 0, Math.PI * 2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#5dade2'; ctx.beginPath(); ctx.arc(screenX - 4, screenY - 4, player.size / 4, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+
+        function drawEnemies() {
+            const icePower = getAbilityPower('ice') + getAbilityPower('blizzard');
+            for (const enemy of enemies) {
+                const screenX = enemy.x - game.camera.x, screenY = enemy.y - game.camera.y;
+                if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue;
+
+                // Frozen effect
+                if (icePower > 0) {
+                    ctx.fillStyle = 'rgba(100, 200, 255, 0.3)';
+                    ctx.beginPath(); ctx.arc(screenX, screenY, enemy.size / 2 + 3, 0, Math.PI * 2); ctx.fill();
+                }
+
+                ctx.fillStyle = enemy.color;
+                ctx.beginPath(); ctx.arc(screenX, screenY, enemy.size / 2, 0, Math.PI * 2); ctx.fill();
+
+                const hpPercent = enemy.hp / enemy.maxHp;
+                ctx.fillStyle = '#333'; ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size, 4);
+                ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f1c40f' : '#e74c3c';
+                ctx.fillRect(screenX - enemy.size / 2, screenY - enemy.size / 2 - 10, enemy.size * hpPercent, 4);
+            }
+        }
+
+        function drawProjectiles() {
+            for (const p of projectiles) {
+                const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y;
+                ctx.shadowColor = p.color; ctx.shadowBlur = 15;
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+            }
+        }
+
+        function drawMaterials() {
+            for (const m of materials) {
+                const screenX = m.x - game.camera.x, screenY = m.y - game.camera.y;
+                if (screenX < -50 || screenX > GAME_WIDTH + 50 || screenY < -50 || screenY > GAME_HEIGHT + 50) continue;
+                const bob = Math.sin(Date.now() * 0.005 + m.bobOffset) * 5;
+                ctx.shadowColor = m.color; ctx.shadowBlur = 20;
+                ctx.font = '28px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(m.symbol, screenX, screenY + bob);
+                ctx.shadowBlur = 0;
+            }
+        }
+
+        function drawParticles() {
+            for (const p of particles) {
+                const screenX = p.x - game.camera.x, screenY = p.y - game.camera.y;
+                ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                ctx.beginPath(); ctx.arc(screenX, screenY, p.size, 0, Math.PI * 2); ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function drawFloatingTexts() {
+            for (const ft of floatingTexts) {
+                const screenX = ft.x - game.camera.x, screenY = ft.y - game.camera.y;
+                ctx.globalAlpha = ft.life; ctx.fillStyle = ft.color;
+                ctx.font = `bold ${ft.size}px Segoe UI`; ctx.textAlign = 'center';
+                ctx.fillText(ft.text, screenX, screenY);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function drawNotifications() {
+            let y = 140;
+            for (const n of notifications) {
+                ctx.globalAlpha = n.life; ctx.fillStyle = n.color;
+                ctx.font = 'bold 18px Segoe UI'; ctx.textAlign = 'center';
+                ctx.fillText(n.text, GAME_WIDTH / 2, y);
+                ctx.globalAlpha = 1; y += 26;
+            }
+        }
 
         function drawUI() {
-            // HP Bar
-            const hpBarWidth = 250, hpBarHeight = 24, hpPercent = player.hp / player.maxHp;
+            // HP
+            const hpBarWidth = 220, hpBarHeight = 22, hpPercent = player.hp / player.maxHp;
             ctx.fillStyle = '#333'; ctx.fillRect(20, 20, hpBarWidth, hpBarHeight);
             ctx.fillStyle = hpPercent > 0.5 ? '#2ecc71' : hpPercent > 0.25 ? '#f1c40f' : '#e74c3c';
             ctx.fillRect(20, 20, hpBarWidth * hpPercent, hpBarHeight);
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.strokeRect(20, 20, hpBarWidth, hpBarHeight);
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'center';
-            ctx.fillText(`❤️ ${Math.ceil(player.hp)} / ${player.maxHp}`, 20 + hpBarWidth / 2, 37);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 13px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText(`${Math.ceil(player.hp)}/${player.maxHp}`, 20 + hpBarWidth / 2, 35);
 
-            ctx.textAlign = 'left'; ctx.font = 'bold 24px Segoe UI';
-            ctx.fillStyle = '#f1c40f'; ctx.fillText(`⭐ ${game.score}`, 20, 70);
-            ctx.fillStyle = '#e74c3c'; ctx.fillText(`Wave ${game.wave}`, 120, 70);
-            ctx.fillStyle = '#9b59b6'; ctx.font = '16px Segoe UI'; ctx.fillText(`👾 ${enemies.length}`, 220, 70);
+            ctx.textAlign = 'left'; ctx.font = 'bold 20px Segoe UI';
+            ctx.fillStyle = '#f1c40f'; ctx.fillText(`⭐${game.score}`, 20, 62);
+            ctx.fillStyle = '#e74c3c'; ctx.fillText(`W${game.wave}`, 110, 62);
+            ctx.fillStyle = '#9b59b6'; ctx.font = '14px Segoe UI'; ctx.fillText(`👾${enemies.length}`, 170, 62);
 
-            ctx.fillStyle = '#3498db'; ctx.font = '13px Segoe UI';
-            ctx.fillText(`ATK:${Math.round(player.attack)} SPD:${player.speed.toFixed(1)} AS:${Math.round(player.attackSpeed)}ms`, 20, 95);
+            ctx.fillStyle = '#888'; ctx.font = '11px Segoe UI';
+            ctx.fillText(`ATK:${Math.round(player.attack)} SPD:${player.speed.toFixed(1)} RNG:${Math.round(player.attackRange)}`, 20, 82);
 
             drawAbilitySlots();
 
-            // Controls
-            ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.font = '13px Segoe UI'; ctx.textAlign = 'right';
-            ctx.fillText('移動:WASD | マージ:[1-5]で2つ選択 | 捨てる:[1-5]→[X]', GAME_WIDTH - 20, GAME_HEIGHT - 20);
+            // Recipe hint
+            ctx.fillStyle = 'rgba(255,255,255,0.5)'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'right';
+            ctx.fillText('[R] レシピ図鑑 | ドラッグでマージ/捨てる', GAME_WIDTH - 20, GAME_HEIGHT - 20);
 
-            // Version & Audio
             ctx.textAlign = 'left';
-            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 16px Segoe UI';
-            ctx.fillText(`🎮 Merge Survivor ${VERSION}`, 20, GAME_HEIGHT - 20);
-            ctx.fillStyle = audioCtx ? '#2ecc71' : '#e74c3c'; ctx.font = '11px Segoe UI';
-            ctx.fillText(audioCtx ? '🔊 ON' : '🔇 Click', 20, GAME_HEIGHT - 38);
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 14px Segoe UI';
+            ctx.fillText(`🎮 ${VERSION}`, 20, GAME_HEIGHT - 20);
+            ctx.fillStyle = audioCtx ? '#2ecc71' : '#e74c3c'; ctx.font = '10px Segoe UI';
+            ctx.fillText(audioCtx ? '🔊' : '🔇', 20, GAME_HEIGHT - 35);
         }
 
         function drawAbilitySlots() {
             const slotSize = 54, gap = 8;
             const startX = GAME_WIDTH - 20 - (slotSize + gap) * player.weaponSlots + gap;
-            const startY = 20;
 
-            ctx.fillStyle = '#fff'; ctx.font = 'bold 14px Segoe UI'; ctx.textAlign = 'right';
-            ctx.fillText('🎒 アビリティ [1-5]でマージ', GAME_WIDTH - 20, 14);
+            ctx.fillStyle = '#fff'; ctx.font = 'bold 12px Segoe UI'; ctx.textAlign = 'right';
+            ctx.fillText('🎒 ドラッグでマージ', GAME_WIDTH - 20, 12);
 
             for (let i = 0; i < player.weaponSlots; i++) {
                 const x = startX + i * (slotSize + gap);
                 const ability = player.abilities[i];
-                const isSelected = game.selectedSlot === i;
+                const isDragSource = dragState.dragging && dragState.slotIndex === i;
 
-                // Slot background
-                ctx.fillStyle = isSelected ? '#4a4a8a' : '#2a2a4e';
-                ctx.fillRect(x, startY, slotSize, slotSize);
-                ctx.strokeStyle = isSelected ? '#f1c40f' : (ability ? '#6a6a9a' : '#3a3a5e');
-                ctx.lineWidth = isSelected ? 3 : 2;
-                ctx.strokeRect(x, startY, slotSize, slotSize);
+                ctx.fillStyle = isDragSource ? '#1a1a3e' : '#2a2a4e';
+                ctx.fillRect(x, 20, slotSize, slotSize);
+                ctx.strokeStyle = ability ? (ability.effectColor || '#6a6a9a') : '#3a3a5e';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(x, 20, slotSize, slotSize);
 
-                // Slot number
-                ctx.fillStyle = '#666'; ctx.font = '10px Segoe UI'; ctx.textAlign = 'left';
-                ctx.fillText(`[${i + 1}]`, x + 3, startY + 12);
-
-                if (ability) {
-                    // Ability icon
-                    ctx.font = '26px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(ability.symbol, x + slotSize / 2, startY + slotSize / 2);
-
-                    // Level badge
+                if (ability && !isDragSource) {
+                    ctx.font = '24px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(ability.symbol, x + slotSize / 2, 20 + slotSize / 2);
                     if (ability.level > 1) {
-                        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 12px Segoe UI';
-                        ctx.fillText(`Lv${ability.level}`, x + slotSize / 2, startY + slotSize - 8);
+                        ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 11px Segoe UI';
+                        ctx.fillText(`Lv${ability.level}`, x + slotSize / 2, 20 + slotSize - 8);
                     }
                 }
             }
 
-            // Selected slot info
-            if (game.selectedSlot >= 0 && player.abilities[game.selectedSlot]) {
-                const ability = player.abilities[game.selectedSlot];
-                ctx.fillStyle = '#fff'; ctx.font = '12px Segoe UI'; ctx.textAlign = 'right';
-                ctx.fillText(`${ability.symbol} ${ability.name} Lv${ability.level || 1}: ${ability.desc}`, GAME_WIDTH - 20, startY + slotSize + 18);
-                ctx.fillStyle = '#999';
-                ctx.fillText('同じ素材を選んでマージ or [X]で捨てる', GAME_WIDTH - 20, startY + slotSize + 34);
+            // Draw dragged item
+            if (dragState.dragging && player.abilities[dragState.slotIndex]) {
+                const ability = player.abilities[dragState.slotIndex];
+                ctx.globalAlpha = 0.8;
+                ctx.font = '32px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(ability.symbol, dragState.currentX, dragState.currentY);
+                ctx.globalAlpha = 1;
+
+                // Drop hint
+                ctx.fillStyle = '#fff'; ctx.font = '11px Segoe UI';
+                ctx.fillText('スロットにドロップでマージ', dragState.currentX, dragState.currentY + 30);
+                ctx.fillText('下に捨てる', dragState.currentX, dragState.currentY + 44);
             }
+        }
+
+        function drawRecipeBook() {
+            if (!game.showRecipes) return;
+
+            ctx.fillStyle = 'rgba(0,0,0,0.9)';
+            ctx.fillRect(100, 80, GAME_WIDTH - 200, GAME_HEIGHT - 160);
+            ctx.strokeStyle = '#f1c40f'; ctx.lineWidth = 3;
+            ctx.strokeRect(100, 80, GAME_WIDTH - 200, GAME_HEIGHT - 160);
+
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 28px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('📖 レシピ図鑑', GAME_WIDTH / 2, 120);
+            ctx.fillStyle = '#888'; ctx.font = '14px Segoe UI';
+            ctx.fillText(`発見: ${discoveredRecipes.length}/${Object.keys(COMBOS).length}`, GAME_WIDTH / 2, 145);
+
+            let y = 180, x = 140;
+            const keys = Object.keys(COMBOS);
+            for (let i = 0; i < keys.length; i++) {
+                const key = keys[i];
+                const combo = COMBOS[key];
+                const discovered = discoveredRecipes.includes(key);
+                const [t1, t2] = key.split('+');
+                const m1 = MATERIAL_TYPES[t1], m2 = MATERIAL_TYPES[t2];
+
+                ctx.fillStyle = discovered ? '#fff' : '#444';
+                ctx.font = '20px Arial'; ctx.textAlign = 'left';
+
+                if (discovered) {
+                    ctx.fillText(`${m1.symbol} + ${m2.symbol} = ${combo.symbol}`, x, y);
+                    ctx.fillStyle = '#aaa'; ctx.font = '13px Segoe UI';
+                    ctx.fillText(`${combo.name}: ${combo.desc}`, x + 130, y);
+                } else {
+                    ctx.fillText(`${m1.symbol} + ${m2.symbol} = ???`, x, y);
+                }
+
+                y += 36;
+                if (y > GAME_HEIGHT - 180) { y = 180; x += 350; }
+            }
+
+            ctx.fillStyle = '#666'; ctx.font = '14px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('[R]で閉じる', GAME_WIDTH / 2, GAME_HEIGHT - 110);
         }
 
         let gameOverScreen = false;
         function gameOver() { game.running = false; gameOverScreen = true; }
         function drawGameOver() {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 64px Segoe UI'; ctx.textAlign = 'center';
-            ctx.fillText('💀 GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 80);
-            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 32px Segoe UI';
-            ctx.fillText(`Score: ${game.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 - 20);
-            ctx.fillStyle = '#9b59b6'; ctx.font = '22px Segoe UI';
-            ctx.fillText(`Wave ${game.wave} まで到達`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 20);
-            ctx.fillStyle = '#fff'; ctx.font = '18px Segoe UI';
-            ctx.fillText('🔄 SPACE でリスタート', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 80);
+            ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            ctx.fillStyle = '#e74c3c'; ctx.font = 'bold 56px Segoe UI'; ctx.textAlign = 'center';
+            ctx.fillText('💀 GAME OVER', GAME_WIDTH / 2, GAME_HEIGHT / 2 - 60);
+            ctx.fillStyle = '#f1c40f'; ctx.font = 'bold 28px Segoe UI';
+            ctx.fillText(`Score: ${game.score}`, GAME_WIDTH / 2, GAME_HEIGHT / 2);
+            ctx.fillStyle = '#9b59b6'; ctx.font = '20px Segoe UI';
+            ctx.fillText(`Wave ${game.wave}`, GAME_WIDTH / 2, GAME_HEIGHT / 2 + 35);
+            ctx.fillStyle = '#fff'; ctx.font = '16px Segoe UI';
+            ctx.fillText('[SPACE] リスタート', GAME_WIDTH / 2, GAME_HEIGHT / 2 + 90);
         }
 
         function restart() {
             player.x = WORLD_WIDTH / 2; player.y = WORLD_HEIGHT / 2;
             player.hp = player.maxHp; player.abilities = [];
-            player.attack = player.baseAttack; player.speed = player.baseSpeed; player.attackSpeed = player.baseAttackSpeed;
-            enemies = []; materials = []; projectiles = []; particles = []; floatingTexts = []; notifications = [];
-            game.score = 0; game.time = 0; game.wave = 1; game.selectedSlot = -1;
+            player.attack = player.baseAttack; player.speed = player.baseSpeed;
+            player.attackSpeed = player.baseAttackSpeed; player.attackRange = 160;
+            enemies = []; materials = []; projectiles = []; particles = [];
+            floatingTexts = []; notifications = [];
+            game.score = 0; game.time = 0; game.wave = 1;
             game.running = true; gameOverScreen = false;
-            addNotification('🎮 素材を集めて[1-5]でマージしよう！', '#2ecc71', 4000);
+            addNotification('🎮 ドラッグでマージ！', '#2ecc71', 3000);
         }
 
         window.addEventListener('keydown', e => { if (e.code === 'Space' && gameOverScreen) restart(); });
@@ -440,17 +699,27 @@
         let lastTime = 0;
         function gameLoop(timestamp) {
             const deltaTime = timestamp - lastTime; lastTime = timestamp;
-            if (game.running) {
+            if (game.running && !game.showRecipes) {
                 game.time += deltaTime; spawnTimer += deltaTime;
-                const spawnInterval = Math.max(800, SPAWN_INTERVAL - game.wave * 80);
-                if (spawnTimer >= spawnInterval) { const spawnCount = Math.min(1 + Math.floor(game.wave / 3), 4); for (let i = 0; i < spawnCount; i++) spawnEnemy(); spawnTimer = 0; }
-                updatePlayer(); updateCamera(); updateEnemies(); autoAttack(timestamp); updateProjectiles(); updateMaterials(); updateParticles(); updateFloatingTexts(); updateNotifications(); updateWave();
+                const spawnInterval = Math.max(600, SPAWN_INTERVAL - game.wave * 100);
+                if (spawnTimer >= spawnInterval) {
+                    const spawnCount = Math.min(1 + Math.floor(game.wave / 2), 5);
+                    for (let i = 0; i < spawnCount; i++) spawnEnemy();
+                    spawnTimer = 0;
+                }
+                updatePlayer(); updateCamera(); updateEnemies();
+                autoAttack(timestamp); updateProjectiles();
+                updateMaterials(); updateParticles();
+                updateFloatingTexts(); updateNotifications(); updateWave();
             }
-            drawBackground(); drawMaterials(); drawEnemies(); drawProjectiles(); drawPlayer(); drawParticles(); drawFloatingTexts(); drawUI(); drawNotifications();
+            drawBackground(); drawMaterials(); drawEnemies();
+            drawProjectiles(); drawPlayer(); drawParticles();
+            drawFloatingTexts(); drawUI(); drawNotifications();
+            drawRecipeBook();
             if (gameOverScreen) drawGameOver();
             requestAnimationFrame(gameLoop);
         }
-        addNotification('🎮 素材を集めて[1-5]でマージしよう！', '#2ecc71', 4000);
+        addNotification('🎮 ドラッグでマージ！[R]でレシピ', '#2ecc71', 4000);
         requestAnimationFrame(gameLoop);
     </script>
 </body>
