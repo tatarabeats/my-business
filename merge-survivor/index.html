@@ -14,7 +14,7 @@
 <body>
     <div id="game-container"><canvas id="gameCanvas"></canvas></div>
     <script>
-        const VERSION = 'v0.8';
+        const VERSION = 'v0.8.1';
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const GAME_WIDTH = 1024, GAME_HEIGHT = 768;
@@ -23,7 +23,7 @@
 
         // Performance limits
         const MAX_ENEMIES = 60;
-        const MAX_PARTICLES = 80;
+        const MAX_PARTICLES = 40;
         const MAX_PROJECTILES = 40;
 
         // ===== SOUND SYSTEM - FIXED =====
@@ -596,7 +596,7 @@
                 playSound('levelup');
                 addNotification(`⬆️ Lv${player.level}！`, '#00ff00', 2500);
                 addFloatingText(player.x, player.y - 50, `LEVEL UP!`, '#00ff00', 24);
-                createParticles(player.x, player.y, '#00ff00', 15);
+                createParticles(player.x, player.y, '#00ff00', 6);
                 applyAbilityEffects();
             }
         }
@@ -685,7 +685,7 @@
                         player.hp -= dmg;
                         player.invincible = true;
                         player.invincibleTime = Date.now() + 500;
-                        createParticles(player.x, player.y, '#ff4444', 5);
+                        createParticles(player.x, player.y, '#ff4444', 3);
                         addFloatingText(player.x, player.y - 25, `-${dmg}`, '#ff4444', 20);
                         playSound('damage');
                         if (player.hp <= 0) gameOver();
@@ -744,7 +744,7 @@
                         if (enemy.hp <= 0) {
                             game.score += enemy.isBoss ? 100 : 10;
                             gainXP(enemy.xp);
-                            createParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 20 : 6);
+                            createParticles(enemy.x, enemy.y, enemy.color, enemy.isBoss ? 10 : 3);
                             playSound('kill', enemy.isBoss ? 0.6 : 1 + Math.random() * 0.2);
 
                             // Dark heal
@@ -901,7 +901,7 @@
 
             // Player body
             ctx.save();
-            if (player.invincible) ctx.globalAlpha = 0.4 + Math.sin(Date.now() * 0.02) * 0.2;
+            if (player.invincible) ctx.globalAlpha = 0.5;
             ctx.fillStyle = '#3498db';
             ctx.beginPath();
             ctx.arc(sx, sy, player.size / 2, 0, Math.PI * 2);
@@ -930,11 +930,11 @@
                     ctx.stroke();
                 }
 
-                // Boss glow
+                // Boss glow (subtle)
                 if (enemy.isBoss) {
-                    ctx.fillStyle = 'rgba(255,0,0,0.2)';
+                    ctx.fillStyle = 'rgba(255,0,0,0.12)';
                     ctx.beginPath();
-                    ctx.arc(sx, sy, enemy.size / 2 + 10 + Math.sin(Date.now() * 0.005) * 5, 0, Math.PI * 2);
+                    ctx.arc(sx, sy, enemy.size / 2 + 8, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
