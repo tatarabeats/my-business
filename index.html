@@ -3,104 +3,374 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PromptVault - 厳選AIプロンプト集</title>
+  <title>Sol Spanish - スペイン語留学で人生を変える</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <!-- ヘッダー -->
-    <header class="hero">
-      <h1>PromptVault</h1>
-      <p class="tagline">仕事が10倍速くなる<br>厳選AIプロンプト集</p>
-    </header>
-
-    <!-- 価値提案 -->
-    <section class="value">
-      <h2>こんな悩みありませんか？</h2>
-      <ul class="problems">
-        <li>ChatGPTを使っても、思った回答が返ってこない</li>
-        <li>毎回プロンプトを考えるのが面倒</li>
-        <li>もっと仕事を効率化したい</li>
+  <!-- ナビゲーション -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <a href="#" class="logo">Sol Spanish</a>
+      <ul class="nav-menu">
+        <li><a href="#destinations">留学先</a></li>
+        <li><a href="#programs">プログラム</a></li>
+        <li><a href="#testimonials">体験談</a></li>
+        <li><a href="#pricing">料金</a></li>
+        <li><a href="#contact" class="nav-cta">無料相談</a></li>
       </ul>
-      <p class="solution">
-        <strong>PromptVault</strong>なら、コピペするだけで<br>
-        プロ品質のアウトプットが手に入ります。
-      </p>
-    </section>
+    </div>
+  </nav>
 
-    <!-- 特徴 -->
-    <section class="features">
-      <h2>含まれるプロンプト</h2>
-      <div class="feature-grid">
-        <div class="feature-card">
-          <div class="icon">📝</div>
-          <h3>文章作成</h3>
-          <p>メール、企画書、SNS投稿など</p>
+  <!-- ヒーロー -->
+  <header class="hero">
+    <div class="hero-content">
+      <h1>スペイン語で、<br>世界を広げよう。</h1>
+      <p class="tagline">本場スペイン・中南米での語学留学をトータルサポート。<br>あなたの夢を、私たちが叶えます。</p>
+      <div class="hero-buttons">
+        <a href="#contact" class="btn btn-primary">無料カウンセリング予約</a>
+        <a href="#programs" class="btn btn-secondary">プログラムを見る</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat">
+          <span class="stat-number">500+</span>
+          <span class="stat-label">留学実績</span>
         </div>
-        <div class="feature-card">
-          <div class="icon">💡</div>
-          <h3>アイデア出し</h3>
-          <p>ブレスト、課題解決、新規事業</p>
+        <div class="stat">
+          <span class="stat-number">98%</span>
+          <span class="stat-label">満足度</span>
         </div>
-        <div class="feature-card">
-          <div class="icon">📊</div>
-          <h3>分析・要約</h3>
-          <p>データ整理、議事録、リサーチ</p>
-        </div>
-        <div class="feature-card">
-          <div class="icon">🔧</div>
-          <h3>プログラミング</h3>
-          <p>コード生成、レビュー、デバッグ</p>
+        <div class="stat">
+          <span class="stat-number">15年</span>
+          <span class="stat-label">サポート歴</span>
         </div>
       </div>
-    </section>
+    </div>
+  </header>
 
-    <!-- 料金 -->
-    <section class="pricing">
-      <h2>料金</h2>
-      <div class="price-card">
-        <div class="price">
-          <span class="amount">¥980</span>
-          <span class="period">/月</span>
+  <!-- 選ばれる理由 -->
+  <section class="why-us">
+    <div class="container">
+      <h2 class="section-title">Sol Spanishが選ばれる理由</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🌍</div>
+          <h3>現地スタッフ常駐</h3>
+          <p>スペイン・メキシコ・コスタリカに日本人スタッフが常駐。困った時も安心です。</p>
         </div>
-        <ul class="benefits">
-          <li>50種類以上のプロンプト</li>
-          <li>毎月新しいプロンプトを追加</li>
-          <li>いつでも解約OK</li>
-        </ul>
-        <!--
-          TODO: Stripeで Payment Link を作成後、下記のhrefを差し替える
-          例: https://buy.stripe.com/xxxxx
-        -->
-        <a href="#payment-link" class="cta-button" id="subscribe-btn">
-          今すぐ始める
-        </a>
-        <p class="note">※ Stripeで安全に決済</p>
+        <div class="feature-card">
+          <div class="feature-icon">📚</div>
+          <h3>厳選された語学学校</h3>
+          <p>現地視察を重ね、質の高い学校のみをご紹介。少人数制で着実に上達。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🏠</div>
+          <h3>ホームステイ手配</h3>
+          <p>厳選されたホストファミリーで、生きたスペイン語と文化を体験。</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">💬</div>
+          <h3>出発前スペイン語講座</h3>
+          <p>渡航前に基礎をマスター。現地でスムーズにスタートできます。</p>
+        </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- FAQ -->
-    <section class="faq">
-      <h2>よくある質問</h2>
-      <details>
-        <summary>どうやって使うの？</summary>
-        <p>会員ページからプロンプトをコピーして、ChatGPTやClaudeに貼り付けるだけです。</p>
-      </details>
-      <details>
-        <summary>解約はいつでもできる？</summary>
-        <p>はい、いつでも解約できます。解約後も当月末までは利用可能です。</p>
-      </details>
-      <details>
-        <summary>返金はできる？</summary>
-        <p>デジタルコンテンツのため、原則返金はできません。</p>
-      </details>
-    </section>
+  <!-- 留学先 -->
+  <section id="destinations" class="destinations">
+    <div class="container">
+      <h2 class="section-title">人気の留学先</h2>
+      <p class="section-subtitle">スペイン本土から中南米まで、あなたにぴったりの留学先を見つけよう</p>
+      <div class="destination-grid">
+        <div class="destination-card">
+          <div class="destination-image spain"></div>
+          <div class="destination-info">
+            <h3>スペイン</h3>
+            <p class="destination-cities">マドリード / バルセロナ / セビーリャ</p>
+            <p>本場カスティーリャ語を学ぶならスペインへ。歴史と芸術、美食の国で最高の留学体験を。</p>
+            <span class="destination-tag">人気No.1</span>
+          </div>
+        </div>
+        <div class="destination-card">
+          <div class="destination-image mexico"></div>
+          <div class="destination-info">
+            <h3>メキシコ</h3>
+            <p class="destination-cities">グアナファト / オアハカ / プラヤデルカルメン</p>
+            <p>コスパ抜群で長期滞在におすすめ。陽気な人々とカラフルな街並みが魅力。</p>
+            <span class="destination-tag">コスパ◎</span>
+          </div>
+        </div>
+        <div class="destination-card">
+          <div class="destination-image costarica"></div>
+          <div class="destination-info">
+            <h3>コスタリカ</h3>
+            <p class="destination-cities">サンホセ / マヌエルアントニオ</p>
+            <p>治安の良さと豊かな自然が魅力。エコツーリズムとスペイン語を同時に楽しめる。</p>
+            <span class="destination-tag">初心者向け</span>
+          </div>
+        </div>
+        <div class="destination-card">
+          <div class="destination-image argentina"></div>
+          <div class="destination-info">
+            <h3>アルゼンチン</h3>
+            <p class="destination-cities">ブエノスアイレス / メンドーサ</p>
+            <p>南米のパリと呼ばれる洗練された街。タンゴとワイン、情熱的な文化を体験。</p>
+            <span class="destination-tag">上級者向け</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <!-- フッター -->
-    <footer>
-      <p>&copy; 2025 PromptVault</p>
-      <p><a href="members.html">会員ページ</a></p>
-    </footer>
-  </div>
+  <!-- プログラム -->
+  <section id="programs" class="programs">
+    <div class="container">
+      <h2 class="section-title">留学プログラム</h2>
+      <div class="program-grid">
+        <div class="program-card">
+          <div class="program-header short">
+            <span class="program-duration">1〜4週間</span>
+            <h3>短期集中プログラム</h3>
+          </div>
+          <div class="program-body">
+            <p>休暇を利用した短期留学。旅行気分でスペイン語デビュー。</p>
+            <ul>
+              <li>週20レッスンの集中講座</li>
+              <li>ホームステイまたは学生寮</li>
+              <li>空港送迎付き</li>
+              <li>現地サポート</li>
+            </ul>
+            <a href="#contact" class="program-link">詳しく見る →</a>
+          </div>
+        </div>
+        <div class="program-card featured">
+          <div class="program-badge">おすすめ</div>
+          <div class="program-header medium">
+            <span class="program-duration">1〜6ヶ月</span>
+            <h3>スタンダードプログラム</h3>
+          </div>
+          <div class="program-body">
+            <p>じっくり学びたい方へ。日常会話からビジネスレベルまで。</p>
+            <ul>
+              <li>週25レッスン + 会話クラス</li>
+              <li>DELE試験対策オプション</li>
+              <li>ホームステイ（2食付き）</li>
+              <li>文化体験アクティビティ</li>
+              <li>24時間緊急サポート</li>
+            </ul>
+            <a href="#contact" class="program-link">詳しく見る →</a>
+          </div>
+        </div>
+        <div class="program-card">
+          <div class="program-header long">
+            <span class="program-duration">6ヶ月〜1年</span>
+            <h3>長期マスタープログラム</h3>
+          </div>
+          <div class="program-body">
+            <p>本気でスペイン語をマスターしたい方へ。現地就職・大学進学も視野に。</p>
+            <ul>
+              <li>週30レッスン + 個別指導</li>
+              <li>DELE B2/C1 取得サポート</li>
+              <li>インターンシップ紹介</li>
+              <li>ビザ取得サポート</li>
+              <li>キャリアカウンセリング</li>
+            </ul>
+            <a href="#contact" class="program-link">詳しく見る →</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 体験談 -->
+  <section id="testimonials" class="testimonials">
+    <div class="container">
+      <h2 class="section-title">留学体験談</h2>
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="testimonial-content">
+            <p>「3ヶ月のバルセロナ留学で人生が変わりました。最初は全く話せなかったのに、帰国時にはホストファミリーと冗談を言い合えるように。今は外資系企業でスペイン語を活かして働いています。」</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">YK</div>
+            <div class="author-info">
+              <span class="author-name">山田 花子さん</span>
+              <span class="author-detail">バルセロナ 3ヶ月 / 会社員</span>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-content">
+            <p>「メキシコのグアナファトは物価が安くて長期滞在に最適でした。カラフルな街並みに毎日感動。Sol Spanishさんの現地サポートのおかげで、困った時もすぐに助けてもらえました。」</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">TN</div>
+            <div class="author-info">
+              <span class="author-name">田中 太郎さん</span>
+              <span class="author-detail">グアナファト 6ヶ月 / 大学生</span>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="testimonial-content">
+            <p>「50代でのスペイン留学、不安でしたがスタッフの皆さんが親身にサポートしてくれました。マドリードの語学学校はシニアの生徒も多く、世界中に友達ができました。」</p>
+          </div>
+          <div class="testimonial-author">
+            <div class="author-avatar">MS</div>
+            <div class="author-info">
+              <span class="author-name">佐藤 美智子さん</span>
+              <span class="author-detail">マドリード 1ヶ月 / 主婦</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 料金 -->
+  <section id="pricing" class="pricing">
+    <div class="container">
+      <h2 class="section-title">料金プラン</h2>
+      <p class="section-subtitle">すべてのプランに手配料・現地サポート・出発前オリエンテーションが含まれます</p>
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>2週間プラン</h3>
+            <div class="price">
+              <span class="price-from">スペインから</span>
+              <span class="price-amount">¥198,000</span>
+              <span class="price-note">〜</span>
+            </div>
+          </div>
+          <div class="pricing-body">
+            <ul>
+              <li>授業料（週20レッスン）</li>
+              <li>入学金・教材費</li>
+              <li>ホームステイ（朝夕食付）</li>
+              <li>空港送迎（往復）</li>
+              <li>海外旅行保険</li>
+            </ul>
+            <a href="#contact" class="btn btn-outline">相談する</a>
+          </div>
+        </div>
+        <div class="pricing-card featured">
+          <div class="pricing-badge">人気</div>
+          <div class="pricing-header">
+            <h3>1ヶ月プラン</h3>
+            <div class="price">
+              <span class="price-from">スペインから</span>
+              <span class="price-amount">¥348,000</span>
+              <span class="price-note">〜</span>
+            </div>
+          </div>
+          <div class="pricing-body">
+            <ul>
+              <li>授業料（週25レッスン）</li>
+              <li>入学金・教材費</li>
+              <li>ホームステイ（朝夕食付）</li>
+              <li>空港送迎（往復）</li>
+              <li>海外旅行保険</li>
+              <li>文化体験アクティビティ</li>
+            </ul>
+            <a href="#contact" class="btn btn-primary">相談する</a>
+          </div>
+        </div>
+        <div class="pricing-card">
+          <div class="pricing-header">
+            <h3>3ヶ月プラン</h3>
+            <div class="price">
+              <span class="price-from">スペインから</span>
+              <span class="price-amount">¥698,000</span>
+              <span class="price-note">〜</span>
+            </div>
+          </div>
+          <div class="pricing-body">
+            <ul>
+              <li>授業料（週25レッスン）</li>
+              <li>入学金・教材費</li>
+              <li>ホームステイ（朝夕食付）</li>
+              <li>空港送迎（往復）</li>
+              <li>海外旅行保険</li>
+              <li>DELE対策オプション</li>
+              <li>ビザ取得サポート</li>
+            </ul>
+            <a href="#contact" class="btn btn-outline">相談する</a>
+          </div>
+        </div>
+      </div>
+      <p class="pricing-note">※ 料金は留学先・時期により異なります。詳しくはお問い合わせください。</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="faq">
+    <div class="container">
+      <h2 class="section-title">よくある質問</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>スペイン語が全くの初心者でも大丈夫ですか？</summary>
+          <p>はい、もちろん大丈夫です！ほとんどの語学学校は完全初心者クラスを設けており、アルファベットからスタートできます。また、出発前のオンラインレッスンで基礎を身につけてから渡航することも可能です。</p>
+        </details>
+        <details class="faq-item">
+          <summary>留学にはどのくらいの費用がかかりますか？</summary>
+          <p>留学先や期間によって大きく異なります。例えばメキシコなら1ヶ月20万円程度から、スペインなら35万円程度からが目安です。長期になるほど1ヶ月あたりの費用は抑えられます。詳しくは無料カウンセリングでご相談ください。</p>
+        </details>
+        <details class="faq-item">
+          <summary>ビザは必要ですか？</summary>
+          <p>日本人の場合、スペインは90日以内、メキシコは180日以内の滞在であればビザは不要です。それ以上の長期留学の場合は学生ビザの取得が必要ですが、申請手続きをサポートしますのでご安心ください。</p>
+        </details>
+        <details class="faq-item">
+          <summary>ホームステイ先はどうやって決まりますか？</summary>
+          <p>お客様のご希望（食事の好み、アレルギー、ペットの有無、通学距離など）をヒアリングした上で、提携校が厳選したホストファミリーをご紹介します。万が一相性が合わない場合は、変更も可能です。</p>
+        </details>
+        <details class="faq-item">
+          <summary>現地でトラブルがあったらどうすればいいですか？</summary>
+          <p>24時間対応の緊急連絡先をお渡ししています。また、スペイン・メキシコ・コスタリカには日本人スタッフが常駐しており、直接サポートを受けることができます。</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="contact" class="cta-section">
+    <div class="container">
+      <div class="cta-content">
+        <h2>まずは無料カウンセリングから</h2>
+        <p>あなたにぴったりの留学プランを一緒に考えましょう。<br>オンラインでも対面でも、お気軽にご相談ください。</p>
+        <div class="cta-buttons">
+          <a href="tel:03-1234-5678" class="btn btn-light">
+            <span class="btn-icon">📞</span>
+            03-1234-5678
+          </a>
+          <a href="mailto:info@solspanish.jp" class="btn btn-primary">
+            <span class="btn-icon">✉️</span>
+            メールで相談
+          </a>
+        </div>
+        <p class="cta-note">営業時間: 平日 10:00〜19:00 / 土曜 10:00〜17:00</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- フッター -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h3>Sol Spanish</h3>
+          <p>スペイン語留学のトータルサポート</p>
+        </div>
+        <div class="footer-links">
+          <a href="#destinations">留学先</a>
+          <a href="#programs">プログラム</a>
+          <a href="#pricing">料金</a>
+          <a href="#contact">お問い合わせ</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2025 Sol Spanish. All rights reserved.</p>
+      </div>
+    </div>
+  </footer>
 </body>
 </html>

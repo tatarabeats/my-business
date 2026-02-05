@@ -1,3 +1,13 @@
+/* ===== Sol Spanish - スペイン語留学エージェント ===== */
+
+/* カラーパレット
+   Primary: #E85D04 (オレンジ - 情熱)
+   Secondary: #DC2F02 (赤 - スペイン)
+   Accent: #FFBA08 (黄色 - 太陽)
+   Dark: #370617 (ダークレッド)
+   Light: #FAF3E0 (クリーム)
+*/
+
 /* ===== 基本設定 ===== */
 * {
   box-sizing: border-box;
@@ -5,339 +15,891 @@
   padding: 0;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Noto Sans JP", sans-serif;
   line-height: 1.7;
   color: #333;
-  background: #f8f9fa;
+  background: #FAF3E0;
 }
 
 .container {
-  max-width: 600px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 0 20px;
 }
 
-/* ===== LP: ヘッダー ===== */
+/* ===== ナビゲーション ===== */
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #E85D04;
+  text-decoration: none;
+}
+
+.nav-menu {
+  display: flex;
+  gap: 30px;
+  list-style: none;
+}
+
+.nav-menu a {
+  color: #333;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s;
+}
+
+.nav-menu a:hover {
+  color: #E85D04;
+}
+
+.nav-cta {
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 100%);
+  color: white !important;
+  padding: 10px 20px;
+  border-radius: 25px;
+}
+
+.nav-cta:hover {
+  opacity: 0.9;
+}
+
+/* ===== ヒーロー ===== */
 .hero {
-  text-align: center;
-  padding: 60px 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 50%, #9D0208 100%);
   color: white;
-  border-radius: 16px;
-  margin-bottom: 40px;
+  padding: 150px 20px 80px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='40' fill='rgba(255,255,255,0.05)'/%3E%3C/svg%3E") repeat;
+  background-size: 100px;
+  opacity: 0.5;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 1;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 .hero h1 {
-  font-size: 2.5rem;
-  margin-bottom: 10px;
+  font-size: 3rem;
+  margin-bottom: 20px;
+  line-height: 1.3;
 }
 
-.tagline {
+.hero .tagline {
   font-size: 1.3rem;
   opacity: 0.95;
+  margin-bottom: 40px;
 }
 
-/* ===== LP: セクション共通 ===== */
-section {
-  background: white;
-  padding: 30px 20px;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-section h2 {
-  font-size: 1.3rem;
-  margin-bottom: 20px;
-  color: #333;
-}
-
-/* ===== LP: 価値提案 ===== */
-.problems {
-  list-style: none;
-  margin-bottom: 20px;
-}
-
-.problems li {
-  padding: 10px 0 10px 30px;
-  position: relative;
-  border-bottom: 1px solid #eee;
-}
-
-.problems li::before {
-  content: "😓";
-  position: absolute;
-  left: 0;
-}
-
-.solution {
-  background: #f0f7ff;
-  padding: 20px;
-  border-radius: 8px;
-  text-align: center;
-  border-left: 4px solid #667eea;
-}
-
-/* ===== LP: 特徴 ===== */
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+.hero-buttons {
+  display: flex;
   gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 50px;
+}
+
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 50px;
+  flex-wrap: wrap;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat-number {
+  display: block;
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.stat-label {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+/* ===== ボタン ===== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 30px;
+  border-radius: 50px;
+  font-size: 1rem;
+  font-weight: bold;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #FFBA08 0%, #FAA307 100%);
+  color: #370617;
+  box-shadow: 0 4px 15px rgba(255, 186, 8, 0.4);
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(255, 186, 8, 0.5);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 2px solid white;
+}
+
+.btn-secondary:hover {
+  background: white;
+  color: #E85D04;
+}
+
+.btn-outline {
+  background: transparent;
+  color: #E85D04;
+  border: 2px solid #E85D04;
+}
+
+.btn-outline:hover {
+  background: #E85D04;
+  color: white;
+}
+
+.btn-light {
+  background: white;
+  color: #E85D04;
+}
+
+.btn-light:hover {
+  background: #FAF3E0;
+}
+
+.btn-icon {
+  font-size: 1.2rem;
+}
+
+/* ===== セクション共通 ===== */
+section {
+  padding: 80px 0;
+}
+
+.section-title {
+  font-size: 2rem;
+  text-align: center;
+  margin-bottom: 15px;
+  color: #370617;
+}
+
+.section-subtitle {
+  text-align: center;
+  color: #666;
+  margin-bottom: 50px;
+  font-size: 1.1rem;
+}
+
+/* ===== 選ばれる理由 ===== */
+.why-us {
+  background: white;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
 }
 
 .feature-card {
   text-align: center;
-  padding: 20px 10px;
-  background: #fafafa;
-  border-radius: 8px;
+  padding: 30px 20px;
+  background: #FAF3E0;
+  border-radius: 16px;
+  transition: transform 0.3s;
 }
 
-.feature-card .icon {
-  font-size: 2rem;
-  margin-bottom: 8px;
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
+.feature-icon {
+  font-size: 3rem;
+  margin-bottom: 15px;
 }
 
 .feature-card h3 {
-  font-size: 1rem;
-  margin-bottom: 5px;
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  color: #370617;
 }
 
 .feature-card p {
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: #666;
 }
 
-/* ===== LP: 料金 ===== */
-.price-card {
+/* ===== 留学先 ===== */
+.destinations {
+  background: #FAF3E0;
+}
+
+.destination-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 30px;
+}
+
+.destination-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: transform 0.3s;
+}
+
+.destination-card:hover {
+  transform: translateY(-5px);
+}
+
+.destination-image {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+}
+
+.destination-image.spain {
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.destination-image.spain::after {
+  content: "🇪🇸";
+  font-size: 4rem;
+}
+
+.destination-image.mexico {
+  background: linear-gradient(135deg, #006847 0%, #CE1126 100%);
+}
+
+.destination-image.mexico::after {
+  content: "🇲🇽";
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.destination-image.costarica {
+  background: linear-gradient(135deg, #002B7F 0%, #CE1126 100%);
+}
+
+.destination-image.costarica::after {
+  content: "🇨🇷";
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.destination-image.argentina {
+  background: linear-gradient(135deg, #75AADB 0%, #FCBF49 100%);
+}
+
+.destination-image.argentina::after {
+  content: "🇦🇷";
+  font-size: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.destination-info {
+  padding: 25px;
+  position: relative;
+}
+
+.destination-info h3 {
+  font-size: 1.5rem;
+  color: #370617;
+  margin-bottom: 5px;
+}
+
+.destination-cities {
+  color: #E85D04;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.destination-info p {
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.destination-tag {
+  position: absolute;
+  top: -15px;
+  right: 20px;
+  background: #FFBA08;
+  color: #370617;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+/* ===== プログラム ===== */
+.programs {
+  background: white;
+}
+
+.program-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.program-card {
+  background: #FAF3E0;
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.program-card:hover {
+  transform: translateY(-5px);
+}
+
+.program-card.featured {
+  border: 3px solid #E85D04;
+}
+
+.program-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #E85D04;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.program-header {
+  padding: 30px 25px;
+  color: white;
   text-align: center;
 }
 
-.price {
+.program-header.short {
+  background: linear-gradient(135deg, #FAA307 0%, #E85D04 100%);
+}
+
+.program-header.medium {
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 100%);
+}
+
+.program-header.long {
+  background: linear-gradient(135deg, #DC2F02 0%, #9D0208 100%);
+}
+
+.program-duration {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+}
+
+.program-header h3 {
+  font-size: 1.3rem;
+}
+
+.program-body {
+  padding: 25px;
+}
+
+.program-body p {
+  color: #666;
   margin-bottom: 20px;
 }
 
-.price .amount {
-  font-size: 3rem;
-  font-weight: bold;
-  color: #667eea;
+.program-body ul {
+  list-style: none;
+  margin-bottom: 20px;
 }
 
-.price .period {
-  font-size: 1.2rem;
+.program-body li {
+  padding: 8px 0;
+  padding-left: 25px;
+  position: relative;
+  color: #555;
+}
+
+.program-body li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #E85D04;
+  font-weight: bold;
+}
+
+.program-link {
+  color: #E85D04;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.program-link:hover {
+  text-decoration: underline;
+}
+
+/* ===== 体験談 ===== */
+.testimonials {
+  background: linear-gradient(135deg, #370617 0%, #6A040F 100%);
+  color: white;
+}
+
+.testimonials .section-title {
+  color: white;
+}
+
+.testimonial-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.testimonial-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 30px;
+}
+
+.testimonial-content p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.author-avatar {
+  width: 50px;
+  height: 50px;
+  background: linear-gradient(135deg, #FFBA08 0%, #FAA307 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #370617;
+}
+
+.author-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.author-name {
+  font-weight: bold;
+}
+
+.author-detail {
+  font-size: 0.85rem;
+  opacity: 0.8;
+}
+
+/* ===== 料金 ===== */
+.pricing {
+  background: #FAF3E0;
+}
+
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 30px;
+}
+
+.pricing-card {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  position: relative;
+  transition: transform 0.3s;
+}
+
+.pricing-card:hover {
+  transform: translateY(-5px);
+}
+
+.pricing-card.featured {
+  border: 3px solid #E85D04;
+  transform: scale(1.05);
+}
+
+.pricing-card.featured:hover {
+  transform: scale(1.05) translateY(-5px);
+}
+
+.pricing-badge {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: #E85D04;
+  color: white;
+  padding: 5px 15px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.pricing-header {
+  padding: 30px;
+  text-align: center;
+  border-bottom: 1px solid #eee;
+}
+
+.pricing-header h3 {
+  font-size: 1.3rem;
+  color: #370617;
+  margin-bottom: 15px;
+}
+
+.price {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.price-from {
+  font-size: 0.9rem;
   color: #666;
 }
 
-.benefits {
+.price-amount {
+  font-size: 2.5rem;
+  font-weight: bold;
+  color: #E85D04;
+}
+
+.price-note {
+  font-size: 1rem;
+  color: #666;
+}
+
+.pricing-body {
+  padding: 30px;
+}
+
+.pricing-body ul {
   list-style: none;
   margin-bottom: 25px;
 }
 
-.benefits li {
-  padding: 8px 0;
+.pricing-body li {
+  padding: 10px 0;
+  padding-left: 25px;
+  position: relative;
   border-bottom: 1px dashed #eee;
 }
 
-.benefits li::before {
-  content: "✓ ";
+.pricing-body li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
   color: #22c55e;
   font-weight: bold;
 }
 
-.cta-button {
-  display: block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  text-decoration: none;
-  padding: 18px 40px;
-  border-radius: 50px;
-  font-size: 1.2rem;
-  font-weight: bold;
-  transition: transform 0.2s, box-shadow 0.2s;
+.pricing-body .btn {
+  width: 100%;
+  justify-content: center;
 }
 
-.cta-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+.pricing-note {
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+  margin-top: 30px;
 }
 
-.note {
-  margin-top: 15px;
-  font-size: 0.85rem;
-  color: #888;
+/* ===== FAQ ===== */
+.faq {
+  background: white;
 }
 
-/* ===== LP: FAQ ===== */
-details {
+.faq-list {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faq-item {
   border-bottom: 1px solid #eee;
-  padding: 15px 0;
+  padding: 20px 0;
 }
 
-summary {
+.faq-item summary {
   cursor: pointer;
   font-weight: bold;
-  list-style: none;
-}
-
-summary::before {
-  content: "Q. ";
-  color: #667eea;
-}
-
-details p {
-  margin-top: 10px;
-  padding-left: 20px;
-  color: #555;
-}
-
-/* ===== LP: フッター ===== */
-footer {
-  text-align: center;
-  padding: 30px;
-  color: #888;
-  font-size: 0.9rem;
-}
-
-footer a {
-  color: #667eea;
-  text-decoration: none;
-}
-
-/* ===== 会員ページ ===== */
-.members-page {
-  max-width: 800px;
-}
-
-.members-header {
-  text-align: center;
-  padding: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  margin-bottom: 20px;
-}
-
-.members-header h1 {
-  font-size: 1.8rem;
-}
-
-/* ナビゲーション */
-.prompt-nav {
-  display: flex;
-  gap: 10px;
-  overflow-x: auto;
-  padding: 10px 0;
-  margin-bottom: 20px;
-}
-
-.nav-item {
-  flex-shrink: 0;
-  padding: 10px 16px;
-  background: white;
-  border-radius: 20px;
-  text-decoration: none;
-  color: #333;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.nav-item.active {
-  background: #667eea;
-  color: white;
-}
-
-/* プロンプトセクション */
-.prompt-section {
-  margin-bottom: 30px;
-}
-
-.prompt-section h2 {
-  font-size: 1.2rem;
-  margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: 2px solid #667eea;
-}
-
-/* プロンプトカード */
-.prompt-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  margin-bottom: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-}
-
-.prompt-card h3 {
   font-size: 1.1rem;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.faq-item summary::before {
+  content: "Q";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: #E85D04;
+  color: white;
+  border-radius: 50%;
+  font-size: 0.9rem;
+}
+
+.faq-item summary::after {
+  content: "+";
+  margin-left: auto;
+  font-size: 1.5rem;
+  color: #E85D04;
+  transition: transform 0.3s;
+}
+
+.faq-item[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.faq-item p {
+  margin-top: 15px;
+  padding-left: 40px;
+  color: #555;
+  line-height: 1.8;
+}
+
+/* ===== CTA ===== */
+.cta-section {
+  background: linear-gradient(135deg, #E85D04 0%, #DC2F02 100%);
+  color: white;
+  text-align: center;
+}
+
+.cta-content h2 {
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.cta-content > p {
+  font-size: 1.1rem;
+  margin-bottom: 30px;
+  opacity: 0.95;
+}
+
+.cta-buttons {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.cta-note {
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
+/* ===== フッター ===== */
+.footer {
+  background: #370617;
+  color: white;
+  padding: 50px 0 20px;
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 30px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 20px;
+}
+
+.footer-brand h3 {
+  font-size: 1.5rem;
+  color: #FFBA08;
   margin-bottom: 5px;
 }
 
-.prompt-card .description {
-  color: #666;
+.footer-brand p {
+  opacity: 0.7;
   font-size: 0.9rem;
-  margin-bottom: 15px;
 }
 
-.prompt-box {
-  background: #1e1e1e;
-  border-radius: 8px;
-  padding: 15px;
-  position: relative;
+.footer-links {
+  display: flex;
+  gap: 30px;
 }
 
-.prompt-box pre {
-  color: #d4d4d4;
-  font-size: 0.85rem;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  font-family: "SF Mono", Consolas, monospace;
-  margin-bottom: 10px;
-}
-
-.copy-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  background: #667eea;
+.footer-links a {
   color: white;
-  border: none;
-  padding: 6px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.8rem;
+  text-decoration: none;
+  opacity: 0.8;
+  transition: opacity 0.3s;
 }
 
-.copy-btn:hover {
-  background: #5a6fd6;
+.footer-links a:hover {
+  opacity: 1;
 }
 
-/* 会員フッター */
-.members-footer {
+.footer-bottom {
   text-align: center;
-  padding: 30px;
-}
-
-.members-footer .small {
+  opacity: 0.6;
   font-size: 0.85rem;
-  color: #888;
-  margin-top: 10px;
 }
 
 /* ===== レスポンシブ ===== */
-@media (max-width: 480px) {
+@media (max-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .program-grid,
+  .pricing-grid,
+  .testimonial-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pricing-card.featured {
+    transform: none;
+  }
+
+  .pricing-card.featured:hover {
+    transform: translateY(-5px);
+  }
+}
+
+@media (max-width: 768px) {
+  .nav-menu {
+    display: none;
+  }
+
   .hero h1 {
     font-size: 2rem;
   }
 
-  .tagline {
+  .hero .tagline {
     font-size: 1.1rem;
   }
 
-  .feature-grid {
+  .hero-stats {
+    gap: 30px;
+  }
+
+  .stat-number {
+    font-size: 2rem;
+  }
+
+  .destination-grid {
     grid-template-columns: 1fr;
   }
 
-  .price .amount {
-    font-size: 2.5rem;
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-content {
+    flex-direction: column;
+    text-align: center;
+    gap: 20px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 120px 15px 60px;
+  }
+
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .section-title {
+    font-size: 1.5rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .cta-buttons {
+    flex-direction: column;
   }
 }
