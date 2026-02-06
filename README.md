@@ -107,6 +107,44 @@ python -m http.server 8000
 
 ---
 
+## ツール: Kindle Screenshot to PDF
+
+Kindleアプリの本を全ページスクリーンショットしてPDFに変換するツール。
+
+### インストール
+
+```bash
+pip install -r requirements.txt
+```
+
+### 使い方
+
+```bash
+# 基本的な使い方
+python kindle_to_pdf.py
+
+# 出力ファイル名を指定
+python kindle_to_pdf.py -o mybook.pdf
+
+# ページめくり速度を調整（遅い回線・重い本向け）
+python kindle_to_pdf.py --delay 1.0
+
+# 右から左にめくる本（漫画など）
+python kindle_to_pdf.py --key left
+
+# スクリーンショットを保持
+python kindle_to_pdf.py --keep-screenshots
+```
+
+### 注意事項
+
+- 実行中はマウス・キーボードを触らないでください
+- 緊急停止: マウスを画面左上隅に移動
+- Kindleアプリを全画面表示にするとキレイなPDFが作れます
+- 同じページが2回検出されると自動で終了します
+
+---
+
 ## ライセンス
 
 MIT
