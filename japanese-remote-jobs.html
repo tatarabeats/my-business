@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>日本語リモート求人ガイド - PromptVault</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container jobs-page">
+    <!-- ヘッダー -->
+    <header class="hero jobs-hero">
+      <h1>日本語スキルで稼ぐ<br>リモート求人ガイド</h1>
+      <p class="tagline">時給3,000円以上 &times; 完全リモート &times; 日本語</p>
+    </header>
+
+    <!-- イントロ -->
+    <section class="jobs-intro">
+      <p>日本語が話せるだけで応募できるリモート求人は、LinkedIn・Indeed・海外求人サイトに<strong>数千件以上</strong>あります。</p>
+      <p>このガイドでは、<strong>時給3,000円以上</strong>の日本語リモート求人の探し方と、選考を突破するためのAIプロンプトを紹介します。</p>
+    </section>
+
+    <!-- 時給相場 -->
+    <section>
+      <h2>職種別の時給相場</h2>
+      <div class="salary-table">
+        <div class="salary-row header-row">
+          <span>職種</span>
+          <span>時給目安</span>
+          <span>難易度</span>
+        </div>
+        <div class="salary-row">
+          <span>カスタマーサポート</span>
+          <span class="salary-amount">3,000〜4,000円</span>
+          <span class="difficulty easy">★☆☆</span>
+        </div>
+        <div class="salary-row">
+          <span>翻訳・ローカライズ</span>
+          <span class="salary-amount">3,500〜5,000円</span>
+          <span class="difficulty easy">★☆☆</span>
+        </div>
+        <div class="salary-row">
+          <span>QAテスター</span>
+          <span class="salary-amount">3,000〜4,500円</span>
+          <span class="difficulty medium">★★☆</span>
+        </div>
+        <div class="salary-row">
+          <span>AIデータアノテーション</span>
+          <span class="salary-amount">2,500〜4,000円</span>
+          <span class="difficulty easy">★☆☆</span>
+        </div>
+        <div class="salary-row">
+          <span>SNSマーケティング</span>
+          <span class="salary-amount">3,500〜6,000円</span>
+          <span class="difficulty medium">★★☆</span>
+        </div>
+        <div class="salary-row">
+          <span>セールス（BDR）</span>
+          <span class="salary-amount">4,000〜7,000円</span>
+          <span class="difficulty medium">★★☆</span>
+        </div>
+        <div class="salary-row">
+          <span>エンジニア（日本語対応）</span>
+          <span class="salary-amount">5,000〜12,000円</span>
+          <span class="difficulty hard">★★★</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 探し方 -->
+    <section>
+      <h2>求人の探し方 3ステップ</h2>
+      <div class="steps">
+        <div class="step-card">
+          <div class="step-number">1</div>
+          <h3>LinkedInプロフィールを整える</h3>
+          <p>英語+日本語の両方でプロフィールを作成。「Open to Work」をONにして、リモートを希望地域に設定。</p>
+        </div>
+        <div class="step-card">
+          <div class="step-number">2</div>
+          <h3>キーワードで検索</h3>
+          <p>以下のキーワードを組み合わせて検索:</p>
+          <div class="keyword-tags">
+            <span class="tag">Japanese speaking</span>
+            <span class="tag">remote</span>
+            <span class="tag">日本語</span>
+            <span class="tag">フルリモート</span>
+            <span class="tag">bilingual Japanese</span>
+            <span class="tag">Japan market</span>
+          </div>
+        </div>
+        <div class="step-card">
+          <div class="step-number">3</div>
+          <h3>AIで応募書類を最適化</h3>
+          <p>ChatGPTやClaudeを使って、職務経歴書・カバーレターを求人ごとにカスタマイズ。<strong>選考通過率が3倍に。</strong></p>
+        </div>
+      </div>
+    </section>
+
+    <!-- おすすめサイト -->
+    <section>
+      <h2>おすすめ求人サイト</h2>
+      <div class="site-list">
+        <div class="site-card">
+          <h3>LinkedIn Jobs</h3>
+          <p>海外企業のメイン採用ツール。リモートフィルターが優秀。</p>
+        </div>
+        <div class="site-card">
+          <h3>Japan Dev</h3>
+          <p>日本のテック企業に特化。リモート求人多数。</p>
+        </div>
+        <div class="site-card">
+          <h3>TokyoDev</h3>
+          <p>日本拠点のエンジニア向け。英語環境の求人が豊富。</p>
+        </div>
+        <div class="site-card">
+          <h3>GaijinPot Jobs</h3>
+          <p>日本で働く外国人向け。日本語スキル重視の求人あり。</p>
+        </div>
+        <div class="site-card">
+          <h3>Remogu</h3>
+          <p>日本のフルリモート特化の求人サイト。</p>
+        </div>
+        <div class="site-card">
+          <h3>We Work Remotely</h3>
+          <p>世界最大級のリモート求人サイト。日本語案件も。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- サンプルプロンプト -->
+    <section class="prompt-section">
+      <h2>求職に使えるAIプロンプト（サンプル）</h2>
+
+      <div class="prompt-card">
+        <h3>LinkedIn検索キーワード生成</h3>
+        <p class="description">自分のスキルに合った検索ワードをAIが提案</p>
+        <div class="prompt-box">
+          <pre>私は以下のスキル・経験を持っています。
+
+【スキル】{例: 日本語ネイティブ、英語ビジネスレベル}
+【経験】{例: カスタマーサポート3年}
+【希望】リモートワーク、時給3,000円以上
+
+LinkedIn Jobsで使える最適な検索キーワードの
+組み合わせを10個提案してください。
+英語と日本語の両方で。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card locked">
+        <h3>職務経歴書の最適化</h3>
+        <p class="description">求人に合わせて経歴書をカスタマイズ</p>
+        <div class="prompt-box locked-box">
+          <div class="lock-overlay">
+            <p>このプロンプトは会員限定です</p>
+            <a href="index.html#pricing" class="cta-button small-cta">会員になる（月額¥980）</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-card locked">
+        <h3>英語カバーレター作成</h3>
+        <p class="description">ネイティブレベルのカバーレターを自動生成</p>
+        <div class="prompt-box locked-box">
+          <div class="lock-overlay">
+            <p>このプロンプトは会員限定です</p>
+            <a href="index.html#pricing" class="cta-button small-cta">会員になる（月額¥980）</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="prompt-card locked">
+        <h3>面接対策（英語・日本語）</h3>
+        <p class="description">想定質問と模範回答を生成</p>
+        <div class="prompt-box locked-box">
+          <div class="lock-overlay">
+            <p>このプロンプトは会員限定です</p>
+            <a href="index.html#pricing" class="cta-button small-cta">会員になる（月額¥980）</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="jobs-cta">
+      <h2>全てのプロンプトを使うなら</h2>
+      <p>PromptVaultなら、求職用プロンプトを含む<strong>50種類以上</strong>のプロンプトが使い放題。</p>
+      <a href="index.html#pricing" class="cta-button">月額¥980で始める</a>
+    </section>
+
+    <!-- フッター -->
+    <footer>
+      <p>&copy; 2025 PromptVault</p>
+      <p><a href="index.html">トップに戻る</a> | <a href="members.html">会員ページ</a></p>
+    </footer>
+  </div>
+
+  <script>
+    function copyPrompt(btn) {
+      const pre = btn.previousElementSibling;
+      navigator.clipboard.writeText(pre.textContent).then(() => {
+        btn.textContent = 'コピーしました!';
+        setTimeout(() => btn.textContent = 'コピー', 2000);
+      });
+    }
+  </script>
+</body>
+</html>

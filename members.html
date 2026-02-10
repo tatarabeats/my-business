@@ -18,6 +18,7 @@
       <a href="#ideas" class="nav-item">💡 アイデア</a>
       <a href="#analysis" class="nav-item">📊 分析</a>
       <a href="#code" class="nav-item">🔧 コード</a>
+      <a href="#jobsearch" class="nav-item">🌏 求職</a>
     </nav>
 
     <!-- 文章作成プロンプト -->
@@ -145,8 +146,129 @@
       </div>
     </section>
 
+    <!-- 求職プロンプト -->
+    <section id="jobsearch" class="prompt-section">
+      <h2>🌏 リモート求職プロンプト</h2>
+
+      <div class="prompt-card">
+        <h3>職務経歴書の最適化</h3>
+        <p class="description">求人票に合わせて経歴書をカスタマイズ</p>
+        <div class="prompt-box">
+          <pre>以下の求人に最適化された職務経歴書を作成してください。
+
+【求人内容】
+{求人票の内容を貼り付け}
+
+【私の経歴】
+{現在の経歴書の内容を貼り付け}
+
+以下のルールで最適化してください：
+1. 求人のキーワードを自然に含める
+2. 求人で求められるスキルに合致する実績を強調
+3. 数値（売上、人数、期間など）を具体的に入れる
+4. ATS（自動選考システム）を通過しやすい構成にする
+
+日本語と英語の両方で出力してください。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <h3>英語カバーレター作成</h3>
+        <p class="description">ネイティブレベルのカバーレターを自動生成</p>
+        <div class="prompt-box">
+          <pre>以下の求人に応募するためのカバーレターを英語で作成してください。
+
+【求人タイトル】{例: Japanese Speaking Customer Success Manager}
+【企業名】{企業名}
+【求人の要件】
+{求人票から主要な要件を貼り付け}
+
+【私の強み】
+- {強み1: 例 日本語ネイティブ+英語ビジネスレベル}
+- {強み2: 例 カスタマーサポート5年の経験}
+- {強み3: 例 SaaS業界での勤務経験}
+
+以下の条件で作成してください：
+1. 300語以内で簡潔に
+2. 最初の1文で採用担当の興味を引く
+3. 具体的な実績を1つ入れる
+4. なぜこの企業で働きたいかを入れる
+5. プロフェッショナルかつ親しみやすいトーン</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <h3>面接対策（英語・日本語）</h3>
+        <p class="description">想定質問と模範回答を生成</p>
+        <div class="prompt-box">
+          <pre>以下の求人の面接対策をしてください。
+
+【求人タイトル】{職種名}
+【企業情報】{企業の業種や規模}
+【求人の要件】
+{求人票を貼り付け}
+
+以下を出力してください：
+1. 想定質問10個（英語と日本語の両方）
+2. 各質問のSTAR形式の模範回答
+3. 逆質問として聞くべき質問5つ
+4. この企業・職種特有の注意点
+
+私の経歴：{簡単な経歴}</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <h3>LinkedIn検索キーワード生成</h3>
+        <p class="description">最適な検索ワードの組み合わせをAIが提案</p>
+        <div class="prompt-box">
+          <pre>私は以下のスキル・経験を持っています。
+
+【スキル】{例: 日本語ネイティブ、英語ビジネスレベル}
+【経験】{例: カスタマーサポート3年、ECサイト運営}
+【希望条件】
+- リモートワーク（完全在宅）
+- 時給3,000円以上（または年収500万以上）
+- 日本語を活かせる
+
+LinkedIn Jobsで使える最適な検索キーワードの
+組み合わせを10個提案してください。
+英語と日本語の両方で出力し、
+各キーワードでヒットしやすい職種も教えてください。</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+
+      <div class="prompt-card">
+        <h3>自己PR文の作成（日英両方）</h3>
+        <p class="description">LinkedInプロフィールや応募書類に使える自己PR</p>
+        <div class="prompt-box">
+          <pre>以下の情報をもとに、リモートワークの求人応募に
+最適な自己PR文を作成してください。
+
+【経歴】{職歴を簡潔に}
+【スキル】{言語スキル、技術スキルなど}
+【実績】{具体的な成果}
+【希望する働き方】フルリモート
+
+以下の2パターンで出力してください：
+1. LinkedIn Summary用（英語、2000文字以内）
+2. 日本語の職務経歴書用（400字以内）
+
+どちらも以下を意識してください：
+- リモートワークへの適性をアピール
+- セルフマネジメント力を示す
+- 日本語スキルを強みとして打ち出す</pre>
+          <button class="copy-btn" onclick="copyPrompt(this)">コピー</button>
+        </div>
+      </div>
+    </section>
+
     <footer class="members-footer">
-      <p><a href="index.html">← トップに戻る</a></p>
+      <p><a href="index.html">← トップに戻る</a> | <a href="japanese-remote-jobs.html">日本語リモート求人ガイド</a></p>
       <p class="small">プロンプトは随時追加されます</p>
     </footer>
   </div>
