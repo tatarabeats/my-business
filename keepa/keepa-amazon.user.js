@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Keepa on Amazon (mobile)
 // @namespace    https://github.com/tatarabeats/my-business
-// @version      1.0.0
-// @description  スマホのブラウザでAmazon商品ページを開いたとき、Keepaの価格推移グラフを表示する
+// @version      1.1.0
+// @description  スマホのブラウザでAmazon商品ページを開いたとき、Keepaの価格推移グラフとサクラチェッカーへのボタンを表示する
 // @match        https://www.amazon.co.jp/*
 // @match        https://amazon.co.jp/*
 // @match        https://www.amazon.com/*
@@ -126,6 +126,17 @@
     box.appendChild(head);
     box.appendChild(tabs);
     box.appendChild(img);
+
+    // サクラチェッカーは日本のAmazonのみ対応
+    if (domain.tld === 'co.jp') {
+      var sakura = document.createElement('a');
+      sakura.href = 'https://sakura-checker.jp/search/' + asin + '/';
+      sakura.target = '_blank';
+      sakura.rel = 'noopener';
+      sakura.textContent = 'サクラチェッカーで見る ›';
+      sakura.style.cssText = 'display:block;margin-top:8px;padding:10px 0;border:1px solid #f4a7b9;border-radius:6px;background:#fff0f4;color:#c2185b;text-align:center;text-decoration:none;font-weight:600;';
+      box.appendChild(sakura);
+    }
 
     var anchor = findAnchor();
     if (anchor === document.body) anchor.insertBefore(box, anchor.firstChild);
