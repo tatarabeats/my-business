@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keepa on Amazon</title>
+<style>
+  :root { --bg:#fafafa; --fg:#1a1a1a; --muted:#666; --card:#fff; --line:#e2e2e2; --accent:#ffd814; --code:#f1f1f1; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#121212; --fg:#eee; --muted:#aaa; --card:#1e1e1e; --line:#333; --accent:#e6c200; --code:#2a2a2a; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; padding:16px; background:var(--bg); color:var(--fg); font:15px/1.7 -apple-system,BlinkMacSystemFont,"Hiragino Sans",sans-serif; }
+  main { max-width:640px; margin:0 auto; }
+  h1 { font-size:22px; margin:8px 0 4px; }
+  h2 { font-size:17px; margin:0 0 8px; }
+  p.lead { color:var(--muted); margin-top:0; }
+  section { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin:16px 0; }
+  ol { padding-left:20px; margin:8px 0; }
+  li { margin:4px 0; }
+  .btn { display:block; width:100%; padding:12px; margin:8px 0; border:0; border-radius:8px; background:var(--accent); color:#111; font-size:15px; font-weight:600; text-align:center; text-decoration:none; cursor:pointer; }
+  textarea { width:100%; height:90px; font:12px monospace; background:var(--code); color:var(--fg); border:1px solid var(--line); border-radius:6px; padding:8px; }
+  .note { color:var(--muted); font-size:13px; }
+  code { background:var(--code); padding:1px 4px; border-radius:4px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Keepa on Amazon</h1>
+  <p class="lead">スマホのブラウザでAmazonの商品ページを開いたときに、Keepaの価格推移グラフと、サクラチェッカーを開くボタンをページ内に表示します。</p>
+
+  <section>
+    <h2>方法A：自動で表示（おすすめ）</h2>
+    <p>商品ページを開くだけで毎回グラフが出ます。</p>
+    <p><strong>iPhone（Safari）</strong></p>
+    <ol>
+      <li>App Storeで無料アプリ「<strong>Userscripts</strong>」を入れる</li>
+      <li>設定 → アプリ → Safari → 機能拡張 → Userscripts をオン（「すべてのWebサイト」を許可）</li>
+      <li>Safariで下のボタンを開き、アドレスバー左の「ぁあ」→ Userscripts →「Install」</li>
+    </ol>
+    <p><strong>Android</strong></p>
+    <ol>
+      <li>「Firefox」アプリを入れ、アドオンから「<strong>Tampermonkey</strong>」を追加</li>
+      <li>Firefoxで下のボタンを開き、「インストール」を押す</li>
+    </ol>
+    <a class="btn" href="keepa-amazon.user.js">スクリプトを開く / インストール</a>
+  </section>
+
+  <section>
+    <h2>方法B：ブックマークから表示（アプリ追加なし）</h2>
+    <p>商品ページでブックマークを押したときだけグラフが出ます。もう一度押すと消えます。</p>
+    <ol>
+      <li>下の「コピー」を押す</li>
+      <li>このページを適当にブックマークし、名前を <code>keepa</code> にする</li>
+      <li>そのブックマークを編集し、URL欄をコピーした内容に置き換えて保存</li>
+      <li>Amazonの商品ページで<br>
+        ・iPhone：ブックマーク一覧から <code>keepa</code> を押す<br>
+        ・Android Chrome：アドレスバーに <code>keepa</code> と入力し、候補のブックマークを押す</li>
+    </ol>
+    <button class="btn" id="copy" type="button">ブックマークレットをコピー</button>
+    <textarea id="bm" readonly>読み込み中…</textarea>
+    <p class="note">PCの場合は次のリンクをブックマークバーへドラッグ：<a id="drag" href="#">keepa</a></p>
+  </section>
+
+  <p class="note">グラフ画像は graph.keepa.com から取得しています。Keepaに登録されていない商品ではグラフが出ません。</p>
+</main>
+<script>
+(function () {
+  var ta = document.getElementById('bm');
+  fetch('keepa-amazon.user.js').then(function (r) { return r.text(); }).then(function (src) {
+    var body = src
+      .replace(/\/\/ ==UserScript==[\s\S]*?\/\/ ==\/UserScript==\s*/, '')
+      .split('\n')
+      .filter(function (l) { return !/^\s*\/\//.test(l); })
+      .map(function (l) { return l.trim(); })
+      .filter(Boolean)
+      .join('\n');
+    var code = 'javascript:' + encodeURIComponent('window.__mmKeepaBookmarklet=1;' + body + '\nvoid 0');
+    ta.value = code;
+    document.getElementById('drag').href = code;
+  }).catch(function () {
+    ta.value = 'スクリプトを読み込めませんでした。ページをWebサーバー経由（GitHub Pagesなど）で開いてください。';
+  });
+  document.getElementById('copy').addEventListener('click', function () {
+    var b = this;
+    function done() { b.textContent = 'コピーしました'; setTimeout(function () { b.textContent = 'ブックマークレットをコピー'; }, 2000); }
+    if (navigator.clipboard) navigator.clipboard.writeText(ta.value).then(done, function () { ta.select(); document.execCommand('copy'); done(); });
+    else { ta.select(); document.execCommand('copy'); done(); }
+  });
+})();
+</script>
+</body>
+</html>
